@@ -1,0 +1,24 @@
+# Optional: MySQL for PricePiler in Docker.
+#   docker compose up -d
+# Then in server/.env:  DB_PORT=3307  DB_USER=root  DB_PASSWORD=pricepiler
+# (Port 3307 avoids clashing with a MySQL/XAMPP already installed on 3306.)
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: pricepiler-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: pricepiler
+      MYSQL_DATABASE: price_comparison
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - pricepiler-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ppricepiler"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pricepiler-mysql-data:

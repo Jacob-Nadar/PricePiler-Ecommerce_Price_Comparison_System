@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+*/node_modules/
+
+# build output
+dist/
+client/dist/
+
+# env
+.env
+server/.env
+
+# logs
+*.log
+npm-debug.log*
+
+# editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# local price history recorded by the server
+server/data/
+
+# Playwright Chromium download (re-created by `npm run setup`)
+server/.playwright-browsers/

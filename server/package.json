@@ -1,0 +1,37 @@
+{
+  "name": "price-comparison-server",
+  "version": "1.0.0",
+  "description": "Backend for the E-commerce Price Comparison System",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node db/migrate.js",
+    "migrate:status": "node db/migrate.js --status",
+    "monitor:once": "node jobs/runOnce.js",
+    "browsers": "node scripts/install-browsers.js",
+    "check:email": "node scripts/check-email.js",
+    "test": "node --test --test-concurrency=1",
+    "test:integration": "node --test --test-concurrency=1 test/integration.test.js",
+    "admin:create": "node scripts/create-admin.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "bcryptjs": "^2.4.3",
+    "cheerio": "^1.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "mysql2": "^3.11.3",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.1",
+    "playwright": "^1.64.0"
+  },
+  "engines": {
+    "node": ">=18.18"
+  }
+}
