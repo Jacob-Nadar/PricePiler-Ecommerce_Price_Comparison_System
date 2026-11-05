@@ -20,7 +20,7 @@ const RATING_OPTIONS = [0, 3, 3.5, 4, 4.5];
 
 function Section({ title, children }) {
   return (
-    <div className="border-t border-slate-100 py-4 first:border-t-0 first:pt-0 dark:border-slate-800">
+    <div className="border-t border-slate-200 py-4 first:border-t-0 first:pt-0 dark:border-slate-800">
       <h4 className="label">{title}</h4>
       {children}
     </div>
@@ -57,7 +57,7 @@ export default function Filters({
         </h3>
         <div className="flex items-center gap-1">
           {activeCount > 0 && (
-            <button type="button" onClick={onReset} className="text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+            <button type="button" onClick={onReset} className="text-xs font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
               Reset
             </button>
           )}

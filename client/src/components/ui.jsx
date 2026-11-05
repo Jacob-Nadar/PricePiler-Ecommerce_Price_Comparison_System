@@ -22,11 +22,9 @@ export function StoreBadge({ slug, name, size = 'md' }) {
 
 export function RatingStars({ rating, count, compact = false }) {
   if (!rating) return null;
-  const tone =
-    rating >= 4 ? 'bg-deal-600' : rating >= 3 ? 'bg-amber-500' : 'bg-rose-500';
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-      <span className={`inline-flex items-center gap-0.5 rounded-md ${tone} px-1.5 py-0.5 font-semibold text-white`}>
+    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+      <span className="inline-flex items-center gap-0.5 rounded-[4px] bg-slate-900 px-1.5 py-0.5 font-semibold text-white dark:bg-slate-100 dark:text-slate-950">
         {rating.toFixed(1)}
         <Icon name="star" filled className="h-3 w-3" />
       </span>
@@ -91,11 +89,11 @@ export function ProductImage({ src, alt, className = '' }) {
 export function EmptyState({ icon = 'search', title, children, action }) {
   return (
     <div className="card flex flex-col items-center px-6 py-14 text-center animate-fade-in">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">
-        <Icon name={icon} className="h-7 w-7" />
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
+        <Icon name={icon} className="h-6 w-6" strokeWidth={1.6} />
       </div>
-      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
-      {children && <div className="mt-1.5 max-w-md text-sm text-slate-500 dark:text-slate-400">{children}</div>}
+      <h3 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h3>
+      {children && <div className="mt-1.5 max-w-md text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">{children}</div>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );

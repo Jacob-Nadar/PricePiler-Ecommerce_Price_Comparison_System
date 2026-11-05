@@ -78,7 +78,7 @@ function StoreStatusBar({ storeStatus, loading, elapsed }) {
           <span
             key={s.storeSlug}
             title={s.message || undefined}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1 text-xs ${tone}`}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-2.5 py-1 font-mono text-[10px] ${tone}`}
           >
             <StoreBadge slug={s.storeSlug} name={STORES[s.storeSlug]?.short || s.storeName} size="sm" />
             <span className="text-slate-500 dark:text-slate-400">{label}</span>
@@ -278,18 +278,18 @@ export default function SearchResults() {
     <div className="container-page py-6 sm:py-8">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <nav className="mb-1 flex items-center gap-1 text-xs text-slate-400">
-            <Link to="/" className="hover:text-brand-600">Home</Link>
+          <nav className="mb-2 flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-400">
+            <Link to="/" className="hover:text-slate-700 dark:hover:text-slate-200">Home</Link>
             <Icon name="chevronRight" className="h-3 w-3" />
             <span>{category && !q ? 'Category' : 'Search'}</span>
           </nav>
-          <h1 className="truncate text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">{title}</h1>
-          {fromLink && q && <p className="mt-1 line-clamp-1 text-sm text-slate-500 dark:text-slate-400">{q}</p>}
+          <h1 className="truncate text-2xl font-semibold text-slate-900 dark:text-white sm:text-[28px]">{title}</h1>
+          {fromLink && q && <p className="mt-1 line-clamp-1 text-[13px] text-slate-500 dark:text-slate-400">{q}</p>}
           {!loading && hasQuery && (
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-slate-400 dark:text-slate-500">
               {filtered.length} product{filtered.length === 1 ? '' : 's'}
-              {multiStore > 0 && ` · ${multiStore} available at more than one store`}
-              {isAdvanced && !fromLink && ` · exact match for ${[brand, model || q].filter(Boolean).join(' ')}`}
+              {multiStore > 0 && ` · ${multiStore} multi-store`}
+              {isAdvanced && !fromLink && ` · exact: ${[brand, model || q].filter(Boolean).join(' ')}`}
             </p>
           )}
         </div>
@@ -325,7 +325,7 @@ export default function SearchResults() {
             >
               <Icon name="sliders" className="h-4 w-4" />
               {activeFilterCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] text-white">
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-[4px] bg-brand-500 px-1 font-mono text-[10px] font-semibold text-slate-950">
                   {activeFilterCount}
                 </span>
               )}
@@ -337,7 +337,7 @@ export default function SearchResults() {
       {hasQuery && <StoreStatusBar storeStatus={storeStatus} loading={loading} elapsed={elapsed} />}
 
       {error && (
-        <div className="mb-5 flex animate-slide-up flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+        <div className="mb-5 flex animate-slide-up flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-[13px] text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
           <span className="flex items-center gap-2">
             <Icon name="alert" className="h-4 w-4 shrink-0" />
             {error}
@@ -349,7 +349,7 @@ export default function SearchResults() {
       )}
 
       {!loading && unavailableStores.length > 0 && (
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
           <span className="flex items-start gap-2">
             <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{unavailableStores.map((s) => s.message).filter(Boolean).join(' ')}</span>
@@ -371,9 +371,11 @@ export default function SearchResults() {
               ))}
             </div>
           ) : !hasQuery ? (
-            <EmptyState icon="search" title="What are you shopping for?" action={<Link to="/" className="btn-primary">Start a search</Link>}>
-              Search any product or pick a category to compare live prices across stores.
-            </EmptyState>
+            <div className="mx-auto max-w-xl">
+              <EmptyState icon="search" title="What are you shopping for?" action={<Link to="/" className="btn-primary">Start a search</Link>}>
+                Search any product or pick a category to compare live prices across stores.
+              </EmptyState>
+            </div>
           ) : filtered.length === 0 && results.length > 0 ? (
             <EmptyState
               icon="sliders"

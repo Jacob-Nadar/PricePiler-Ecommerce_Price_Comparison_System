@@ -89,7 +89,7 @@ export default function Register() {
       footer={
         <>
           Already have an account?{' '}
-          <Link to={`/login${params.get('next') ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+          <Link to={`/login${params.get('next') ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
             Log in
           </Link>
         </>

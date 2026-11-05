@@ -171,7 +171,7 @@ export default function ProductDetails() {
       <button
         type="button"
         onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/search'))}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-300"
+        className="mb-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       >
         <Icon name="arrowLeft" className="h-4 w-4" />
         Back to results
@@ -179,44 +179,44 @@ export default function ProductDetails() {
 
       <div className="card animate-slide-up overflow-hidden">
         <div className="grid gap-6 p-5 sm:p-7 md:grid-cols-[minmax(0,320px)_1fr] md:gap-10">
-          <div className="relative flex aspect-square items-center justify-center rounded-2xl border border-slate-100 bg-white p-6 dark:border-slate-800">
+          <div className="relative flex aspect-square items-center justify-center rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800">
             <ProductImage src={product.imageUrl} alt={product.name} className="h-full w-full" />
           </div>
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               {product.brand && (
-                <span className="text-sm font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-300">{product.brand}</span>
+                <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-brand-700 dark:text-brand-400">{product.brand}</span>
               )}
-              {product.category && <span className="text-sm text-slate-400">· {product.category}</span>}
+              {product.category && <span className="font-mono text-[11px] text-slate-400">· {product.category}</span>}
             </div>
-            <h1 className="mt-1 font-sans text-xl font-bold leading-snug text-slate-900 dark:text-white sm:text-2xl">{product.name}</h1>
+            <h1 className="mt-2 font-sans text-xl font-semibold leading-snug text-slate-900 dark:text-white sm:text-2xl">{product.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <RatingStars rating={product.rating} count={product.ratingCount} />
-              <span className="text-xs text-slate-400">
+              <span className="font-mono text-[11px] text-slate-400">
                 {storeCount} store{storeCount === 1 ? '' : 's'} · {offers.length} listing{offers.length === 1 ? '' : 's'}
               </span>
             </div>
 
             {hasInStock && bestOffer ? (
-              <div className="mt-5 rounded-2xl border border-deal-500/30 bg-gradient-to-br from-deal-50 to-white p-5 dark:from-deal-500/10 dark:to-slate-900">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-deal-700 dark:text-deal-500">
-                  <Icon name="check" className="h-3.5 w-3.5" strokeWidth={3} />
+              <div className="mt-5 rounded-xl border border-brand-300/50 bg-brand-50/60 p-5 dark:border-brand-500/25 dark:bg-brand-500/[0.06]">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-800 dark:text-brand-300">
+                  <Icon name="check" className="h-3.5 w-3.5" strokeWidth={2.5} />
                   Best in-stock price
                 </div>
-                <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-display text-4xl font-extrabold text-slate-900 dark:text-white">{formatPriceINR(bestOffer.price)}</span>
+                <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="num text-4xl font-semibold tracking-tight text-slate-900 dark:text-white">{formatPriceINR(bestOffer.price)}</span>
                   {bestOffer.mrp && (
-                    <span className="text-base text-slate-400 line-through">{formatPriceINR(bestOffer.mrp)}</span>
+                    <span className="num text-sm text-slate-400 line-through">{formatPriceINR(bestOffer.mrp)}</span>
                   )}
                   {bestOffer.discountPercent > 0 && (
-                    <span className="font-semibold text-deal-600 dark:text-deal-500">{bestOffer.discountPercent}% off</span>
+                    <span className="font-mono text-xs font-semibold text-brand-700 dark:text-brand-400">{bestOffer.discountPercent}% off</span>
                   )}
                 </div>
-                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">at {bestOffer.storeName}</div>
+                <div className="mt-1 text-[13px] text-slate-600 dark:text-slate-400">at {bestOffer.storeName}</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {savings && (
-                    <span className="badge bg-deal-600 py-1 text-white">
+                    <span className="badge bg-brand-500 py-1 text-slate-950">
                       You save {formatPriceINR(savings.amount)} ({savings.percent}%) vs {shortStoreName(savings.comparedTo)}
                     </span>
                   )}
@@ -232,7 +232,7 @@ export default function ProductDetails() {
                 </div>
               </div>
             ) : (
-              <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+              <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-[13px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
                 <Icon name="alert" className="mt-0.5 h-5 w-5 shrink-0" />
                 <div>
                   <p className="font-semibold">{noInStockReason || 'No in-stock offer available right now.'}</p>
@@ -253,7 +253,7 @@ export default function ProductDetails() {
                 <Icon name="share" className="h-4 w-4" />
                 Share
               </button>
-              <span className="ml-auto flex items-center gap-1 text-xs text-slate-400">
+              <span className="ml-auto flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.1em] text-slate-400">
                 <Icon name="clock" className="h-3.5 w-3.5" />
                 Checked {timeAgo(lastChecked) || 'just now'}
               </span>
@@ -262,9 +262,9 @@ export default function ProductDetails() {
             {specs.length > 0 && (
               <dl className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {specs.map((s) => (
-                  <div key={s.key} className="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                    <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{s.label}</dt>
-                    <dd className="truncate text-sm font-medium text-slate-800 dark:text-slate-100" title={s.value}>{s.value}</dd>
+                  <div key={s.key} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-800/50">
+                    <dt className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">{s.label}</dt>
+                    <dd className="mt-0.5 truncate text-[13px] font-medium text-slate-800 dark:text-slate-100" title={s.value}>{s.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -275,12 +275,18 @@ export default function ProductDetails() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <section className="card animate-slide-up p-5 [animation-delay:60ms] sm:p-6">
-          <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Price history</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Price history</h2>
+            <span className="eyebrow">Recorded</span>
+          </div>
           <PriceChart series={series} range={range} onRangeChange={setRange} loading={historyLoading} />
         </section>
 
         <section className="card animate-slide-up p-5 [animation-delay:120ms] sm:p-6">
-          <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">All offers</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">All offers</h2>
+            <span className="eyebrow">{offers.length} listings</span>
+          </div>
           <ul className="space-y-2.5">
             {offers.map((o, idx) => {
               const isBest = bestOffer && o.productUrl === bestOffer.productUrl;
@@ -288,32 +294,32 @@ export default function ProductDetails() {
               return (
                 <li
                   key={`${o.storeSlug}-${o.productUrl || idx}`}
-                  className={`rounded-xl border p-3 transition-colors ${
+                  className={`rounded-lg border p-3 transition-colors ${
                     isBest
-                      ? 'border-deal-500/40 bg-deal-50/60 dark:bg-deal-500/5'
+                      ? 'border-brand-400/50 bg-brand-50/50 dark:border-brand-400/30 dark:bg-brand-500/5'
                       : 'border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <StoreBadge slug={o.storeSlug} name={o.storeName} size="sm" />
                     <div className="text-right">
-                      <div className={`font-display font-bold ${isOut ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
+                      <div className={`num text-[15px] font-semibold ${isOut ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
                         {formatPriceINR(o.price)}
                       </div>
                       {o.discountPercent > 0 && (
-                        <div className="text-[11px] text-slate-400">
+                        <div className="font-mono text-[10px] text-slate-400">
                           <span className="line-through">{formatPriceINR(o.mrp)}</span>{' '}
-                          <span className="text-deal-600">{o.discountPercent}% off</span>
+                          <span className="text-brand-700 dark:text-brand-400">{o.discountPercent}% off</span>
                         </div>
                       )}
                     </div>
                   </div>
                   {o.title && o.title !== product.name && (
-                    <p className="mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{o.title}</p>
+                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{o.title}</p>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <AvailabilityBadge status={o.availability} />
-                    {isBest && <span className="badge bg-deal-600 text-white">Best</span>}
+                    {isBest && <span className="badge bg-brand-500 text-slate-950">Best</span>}
                     {isOut && <StockAlertButton product={product} offer={o} />}
                     {o.sponsored && <span className="badge bg-slate-100 text-slate-500 dark:bg-slate-800">Sponsored</span>}
                     <PriceSignal offer={o} />
@@ -322,7 +328,7 @@ export default function ProductDetails() {
                         href={o.productUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300"
+                        className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                       >
                         Visit <Icon name="external" className="h-3 w-3" />
                       </a>

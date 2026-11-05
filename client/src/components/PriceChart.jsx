@@ -20,12 +20,12 @@ export const RANGES = [
 ];
 
 // Distinct line colours when one retailer has several variant listings.
-const VARIANT_SHADES = ['', '#7c3aed', '#0891b2', '#db2777'];
+const VARIANT_SHADES = ['', '#0f766e', '#64748b', '#b45309'];
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs shadow-lift backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+    <div className="rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-[11px] shadow-lift backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
       <div className="mb-1 font-semibold text-slate-700 dark:text-slate-200">
         {new Date(label).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}
       </div>
@@ -44,9 +44,9 @@ function ChartTooltip({ active, payload, label }) {
 
 function Stat({ label, value, tone = 'text-slate-900 dark:text-white', children }) {
   return (
-    <div className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</div>
-      <div className={`mt-0.5 font-display text-lg font-bold ${tone}`}>{value}</div>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+      <div className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">{label}</div>
+      <div className={`num mt-1 text-[17px] font-semibold ${tone}`}>{value}</div>
       {children}
     </div>
   );
@@ -153,7 +153,7 @@ export default function PriceChart({ series = [], range, onRangeChange, loading 
     return (
       <div>
         {header}
-        <div className="flex flex-col items-center rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center dark:border-slate-700">
+        <div className="flex flex-col items-center rounded-lg border border-dashed border-slate-200 px-6 py-10 text-center dark:border-slate-700">
           <Icon name="chart" className="h-8 w-8 text-slate-300 dark:text-slate-600" />
           <p className="mt-3 text-sm font-medium text-slate-600 dark:text-slate-300">
             {range && range !== 'all' ? 'No price history in this time range' : 'No price history yet'}
@@ -242,7 +242,7 @@ export default function PriceChart({ series = [], range, onRangeChange, loading 
                 onClick={() => toggle(line.key)}
                 aria-pressed={!off}
                 title={off ? 'Show on chart' : 'Hide from chart'}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium transition-opacity ${
+                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-mono text-[10px] font-medium transition-opacity ${
                   off ? 'border-slate-200 opacity-50 dark:border-slate-700' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
                 }`}
               >

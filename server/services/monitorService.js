@@ -116,6 +116,21 @@ async function recordFailure(listing, token, message) {
   });
 }
 
+// Releases the claim on a listing that cannot be checked automatically — either
+// the store has no usable adapter, or the adapter opted out of auto-refresh.
+// This is an expected, permanent state rather than a check failure: the stored
+// price/stock and the failure counter are left untouched, and the next attempt
+// is simply pushed out so the pass moves on to listings that can actually be
+// checked.
+async function skipUnavailable(listing, token) {
+  await db.execute(
+    `UPDATE product_listings SET lock_token = NULL, locked_until = NULL,
+            next_check_at = UTC_TIMESTAMP() + INTERVAL ? MINUTE
+      WHERE id = ? AND lock_token = ?`,
+    [config.monitor.intervalMinutes, listing.id, token]
+  );
+}
+
 async function recordSuccess(listing, token, obs) {
   const snapshot = await db.transaction(async (conn) => {
     await conn.execute(
@@ -165,9 +180,13 @@ async function checkListing(listing) {
 
   await adapters.ensureLoaded();
   const adapter = adapters.getAdapterBySlug(listing.retailer_slug);
-  if (!adapter || !adapter.isAvailable()) {
-    await recordFailure(listing, token, `No adapter available for ${listing.retailer_slug}.`);
-    return { listingId: listing.id, ok: false };
+  // Stores that cannot be fetched automatically are skipped rather than recorded
+  // as check failures; an adapter without live data is skipped the same way.
+  const autoRefresh = adapter?.supportsAutoRefresh?.() ?? true;
+  if (!adapter || !adapter.isAvailable() || !autoRefresh) {
+    await skipUnavailable(listing, token);
+    logger.info('monitor.skip_store_unavailable', { listingId: listing.id, retailer: listing.retailer_slug });
+    return { listingId: listing.id, skipped: 'store_unavailable' };
   }
 
   try {

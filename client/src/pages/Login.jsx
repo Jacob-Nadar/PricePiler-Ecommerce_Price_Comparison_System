@@ -72,7 +72,7 @@ export default function Login() {
       footer={
         <>
           New to PricePiler?{' '}
-          <Link to={`/register${params.get('next') ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+          <Link to={`/register${params.get('next') ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
             Create an account
           </Link>
         </>
@@ -96,7 +96,7 @@ export default function Login() {
           <PasswordInput id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
         </Field>
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+          <Link to="/forgot-password" className="text-[13px] font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
             Forgot password?
           </Link>
         </div>

@@ -70,7 +70,7 @@ export default function Watchlist() {
           action={<Link to="/" className="btn-primary">Find products</Link>}
         >
           Tap the heart on any product to save it here and re-check every store in one click.{' '}
-          <Link to="/register" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+            <Link to="/register" className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
             Create an account
           </Link>{' '}
           to get automatic price tracking and email alerts.
@@ -85,10 +85,11 @@ export default function Watchlist() {
     <div className="container-page max-w-5xl py-6 sm:py-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Watchlist</h1>
+          <p className="eyebrow">Saved · This device</p>
+          <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">Watchlist</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {watchlist.length} saved product{watchlist.length === 1 ? '' : 's'} · stored on this device ·{' '}
-            <Link to="/login?next=/dashboard" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+            <Link to="/login?next=/dashboard" className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
               Log in to track automatically
             </Link>
           </p>
@@ -109,7 +110,7 @@ export default function Watchlist() {
               style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}
             >
               <div className="flex gap-4">
-                <Link to={detailsLink(item)} className="h-20 w-20 shrink-0 rounded-xl border border-slate-100 bg-white p-2 dark:border-slate-800 sm:h-24 sm:w-24">
+                <Link to={detailsLink(item)} className="h-20 w-20 shrink-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950 sm:h-24 sm:w-24">
                   <ProductImage src={item.imageUrl} alt={item.name} className="h-full w-full" />
                 </Link>
                 <div className="min-w-0 flex-1">
@@ -134,7 +135,7 @@ export default function Watchlist() {
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-display text-xl font-bold text-slate-900 dark:text-white">{formatPriceINR(item.lastPrice)}</span>
+                    <span className="num text-xl font-semibold text-slate-900 dark:text-white">{formatPriceINR(item.lastPrice)}</span>
                     {item.lastStore && (
                       <span className="text-sm text-slate-500 dark:text-slate-400">at {shortStoreName(item.lastStore)}</span>
                     )}
@@ -154,7 +155,7 @@ export default function Watchlist() {
                     <PriceAlertButton
                       product={{ ...item, offers: item.offers || [] }}
                       label="Get email price alerts"
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300"
                     />
                     <button
                       type="button"

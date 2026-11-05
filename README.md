@@ -10,7 +10,7 @@ price history, and get **email alerts** when a price drops or an out-of-stock it
 | Database   | MySQL 8 or MariaDB 10.4+ (XAMPP works) |
 | Email      | Nodemailer (Gmail SMTP with an App Password) |
 | Scheduling | node-cron (in-process background monitor) |
-| Scraping   | Playwright (Chromium) for Amazon/Flipkart, HTTP for Myntra |
+| Data       | Playwright (Chromium) for Amazon and Flipkart, HTTP for Myntra |
 
 ---
 
@@ -81,6 +81,20 @@ npm run migrate
 Without `SMTP_USER`/`SMTP_PASS` the app runs in **console mode** (development only): emails
 — including OTP codes — are printed in the server terminal and recorded as *Logged*, never
 as *Sent*, so you can test every feature before setting up Gmail.
+
+### Flipkart scraping
+
+Flipkart is scraped with **Playwright (Chromium)**, the same engine used for Amazon — no API key
+or affiliate account is needed. `npm run setup` downloads the browser binary; if you skipped it,
+run `npm run install:browsers --prefix server`.
+
+The Flipkart adapter opens the public search page, reads the rendered result cards (title, price,
+MRP, rating, stock), and opens product pages to read the schema.org JSON-LD block plus visible
+price/MRP text. When Flipkart shows a captcha or blocks the request, the check is recorded as
+**failed/unknown** and the last known price is kept — the app never invents a price.
+
+Flipkart listings are tracked like any other store: they appear in comparisons, are refreshed by
+the background monitor, build price history and can trigger price/stock alerts.
 
 ### Create your admin login
 
@@ -290,17 +304,25 @@ notification events.
 
 ## 8. Data sources & limitations
 
-Prices come from the public product and search pages of each store, fetched politely (spaced
-requests, small batches, a capped number of browser pages). Store pages change and may block
-automated access or show different content; when a page cannot be read reliably the app records
-the check as **failed/unknown** rather than guessing, and keeps the last good data. Before using
-this beyond personal/educational use, review each retailer's terms of service and robots policy.
+**Flipkart** prices are scraped from the public search and product pages with Playwright
+(Chromium), like Amazon. Search results give the title, price, MRP, rating and stock; product
+pages are read from their schema.org JSON-LD block plus the visible price text. Because Flipkart
+serves a JavaScript app and sometimes an anti-bot challenge, a check can fail, return a captcha
+page or show different content — the app then records the check as **failed/unknown**, keeps the
+last good price and backs off before retrying. The background monitor refreshes Flipkart listings
+automatically and price/stock alerts work on the stored prices.
 
-**Approved data sources:** to switch a store to an official API or affiliate feed (e.g. Amazon
-Product Advertising API, Flipkart Affiliate API), implement `search(query)` and
-`extractFromUrl(url)` in a new class extending `server/adapters/baseAdapter.js` and register it in
-`server/adapters/index.js`. The monitor, history and alerts use the adapter interface only, so
-nothing else needs to change.
+**Amazon and Myntra** prices come from their public product and search pages, fetched politely
+(spaced requests, small batches, a capped number of browser pages). Store pages change and may
+block automated access or show different content; when a page cannot be read reliably the app
+records the check as **failed/unknown** rather than guessing, and keeps the last good data.
+Before using this beyond personal/educational use, review each retailer's terms of service and
+robots policy.
+
+**Approved data sources:** to switch another store to an official API or affiliate feed (e.g. the
+Amazon Product Advertising API), implement `search(query)` and `extractFromUrl(url)` in a new
+class extending `server/adapters/baseAdapter.js` and register it in `server/adapters/index.js`.
+The monitor, history and alerts use the adapter interface only, so nothing else needs to change.
 
 ---
 

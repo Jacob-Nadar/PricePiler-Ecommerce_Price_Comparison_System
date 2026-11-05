@@ -13,6 +13,11 @@ class BaseAdapter {
     return false;
   }
 
+  // Whether the scheduler may fetch this store's prices on its own.
+  supportsAutoRefresh() {
+    return true;
+  }
+
   async search(_query, _options = {}) {
     throw new Error('search() not implemented');
   }

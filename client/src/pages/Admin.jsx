@@ -116,7 +116,7 @@ function DataTable({ list, columns, empty, rowKey = (r) => r.id, onRowClick }) {
     <div className={list.loading ? 'opacity-60 transition-opacity' : ''}>
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400 dark:border-slate-800">
+          <thead className="border-b border-slate-200 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500 dark:border-slate-800 dark:text-slate-400">
             <tr>
               {columns.map((c) => (
                 <th key={c.label} className={`px-4 py-3 font-semibold ${c.className || ''}`}>{c.label}</th>
@@ -146,10 +146,10 @@ function DataTable({ list, columns, empty, rowKey = (r) => r.id, onRowClick }) {
 function Stat({ label, value, sub, icon }) {
   return (
     <div className="card p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <div className="flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
         <Icon name={icon} className="h-3.5 w-3.5" /> {label}
       </div>
-      <div className="mt-1 font-display text-2xl font-extrabold text-slate-900 dark:text-white">{value ?? 0}</div>
+      <div className="mt-1.5 num text-2xl font-semibold text-slate-900 dark:text-white">{value ?? 0}</div>
       {sub && <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{sub}</div>}
     </div>
   );
@@ -162,7 +162,7 @@ function Overview({ onOpenUser }) {
     adminApi.overview().then(setData).catch((err) => setError(err.message));
   }, []);
   if (error) return <EmptyState icon="alert" title="Could not load overview">{error}</EmptyState>;
-  if (!data) return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[...Array(8)].map((_, i) => <div key={i} className="skeleton h-24 rounded-2xl" />)}</div>;
+  if (!data) return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[...Array(8)].map((_, i) => <div key={i} className="skeleton h-24 rounded-lg" />)}</div>;
   const { users, priceAlerts, stockAlerts, emails7d, catalog } = data;
   return (
     <div className="space-y-6">
@@ -177,7 +177,7 @@ function Overview({ onOpenUser }) {
         <Stat icon="refresh" label="Last successful check" value={catalog.lastSuccess ? timeAgo(catalog.lastSuccess) : 'Never'} />
       </div>
       <div>
-        <h3 className="mb-3 font-sans text-base font-bold text-slate-900 dark:text-white">Newest users</h3>
+        <h3 className="mb-3 text-base font-semibold text-slate-900 dark:text-white">Newest users</h3>
         <ul className="card divide-y divide-slate-100 dark:divide-slate-800">
           {data.recentUsers.map((u) => (
             <li key={u.id}>
@@ -274,7 +274,7 @@ function UserDetail({ userId, onClose, onChanged }) {
       ) : (
         <div className="space-y-5 text-sm">
           <div>
-            <p className="text-lg font-bold text-slate-900 dark:text-white">{u.fullName}</p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">{u.fullName}</p>
             <p className="break-all text-slate-500">{u.email}</p>
             <div className="mt-2 flex flex-wrap gap-1">
               <Pill>{u.role}</Pill>
@@ -322,7 +322,7 @@ function UserDetail({ userId, onClose, onChanged }) {
               <ul className="space-y-1.5">
                 {data.saved.map((s) => (
                   <li key={s.productId} className="flex justify-between gap-2">
-                    <Link to={`/product/${s.productId}`} className="line-clamp-1 text-brand-600 hover:underline dark:text-brand-300">{s.name}</Link>
+                    <Link to={`/product/${s.productId}`} className="line-clamp-1 text-brand-700 hover:underline dark:text-brand-300">{s.name}</Link>
                     <span className="shrink-0 text-slate-500">{s.bestOffer ? formatPriceINR(s.bestOffer.price) : '—'}</span>
                   </li>
                 ))}
@@ -461,7 +461,7 @@ function Listings() {
           { label: '', render: (r) => (
             <button
               type="button"
-              className="whitespace-nowrap text-xs font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300"
+              className="whitespace-nowrap text-xs font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300"
               onClick={async () => {
                 try {
                   await adminApi.checkListing(r.id);
@@ -538,10 +538,10 @@ export default function Admin() {
     <div className="container-page py-6 sm:py-8">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <span className="badge bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+          <span className="badge bg-brand-50 font-mono uppercase tracking-wide text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
             <Icon name="shield" className="h-3.5 w-3.5" /> Admin
           </span>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Admin panel</h1>
+          <h1 className="mt-2 text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">Admin panel</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Customers, alerts, monitored listings and email delivery. Every change is recorded in the audit log.</p>
         </div>
       </div>
@@ -554,7 +554,7 @@ export default function Admin() {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setParams({ tab: t.id }, { replace: true })}
-            className={`-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+            className={`-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${
               tab === t.id
                 ? 'border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'

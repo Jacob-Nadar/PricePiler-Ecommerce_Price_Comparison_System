@@ -37,7 +37,7 @@ export default function SearchForm({ onSearch, onUrlPasted, loading = false, aut
         <div className="relative flex-1">
           <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <input
-            className="input h-14 rounded-2xl pl-12 text-base"
+            className="input h-12 rounded-lg pl-12 text-[15px]"
             placeholder="Search a product — e.g. iPhone 15, running shoes, basmati rice"
             value={name}
             onChange={handleChange}
@@ -46,7 +46,7 @@ export default function SearchForm({ onSearch, onUrlPasted, loading = false, aut
             required
           />
         </div>
-        <button type="submit" className="btn-primary h-14 rounded-2xl px-7 text-base" disabled={loading || !name.trim()}>
+        <button type="submit" className="btn-primary h-12 rounded-lg px-6 text-[15px]" disabled={loading || !name.trim()}>
           Compare prices
           <Icon name="arrowRight" className="h-4 w-4" />
         </button>
@@ -55,7 +55,7 @@ export default function SearchForm({ onSearch, onUrlPasted, loading = false, aut
       <button
         type="button"
         onClick={() => setShowAdvanced((v) => !v)}
-        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-300"
+        className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-slate-500 hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-300"
         aria-expanded={showAdvanced}
       >
         <Icon name="chevronDown" className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />

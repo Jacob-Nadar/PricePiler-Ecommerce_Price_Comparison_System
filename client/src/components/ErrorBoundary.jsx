@@ -25,7 +25,7 @@ export default class ErrorBoundary extends Component {
     if (!this.state.error) return this.props.children;
     return (
       <div className="container-page py-20 text-center">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Something went wrong on this page</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Something went wrong on this page</h1>
         <p className="mt-2 text-slate-500 dark:text-slate-400">{this.state.error.message}</p>
         <button type="button" className="btn-primary mt-6" onClick={() => this.setState({ error: null })}>
           Try again

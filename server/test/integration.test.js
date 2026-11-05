@@ -369,9 +369,34 @@ if (!enabled) {
         body: { range: '7d', offers: [{ storeSlug: 'flipkart', productUrl: base.product_url }] },
       });
       assert.equal(history.body.data.history[0].stats.current, 2100);
+
+      // A store that opts out of auto-refresh is skipped automatically, not
+      // counted as a check failure.
+      fake.supportsAutoRefresh = () => false;
+      await db.execute('UPDATE product_listings SET next_check_at = NULL WHERE id = ?', [listing.id]);
+      r = await row();
+      const skipped = await monitor.checkListing({
+        ...base,
+        product_id: r.product_id,
+        current_price: r.current_price,
+        availability: r.availability,
+        consecutive_failures: r.consecutive_failures,
+      });
+      assert.equal(skipped.skipped, 'store_unavailable', JSON.stringify(skipped));
+      r = await row();
+      assert.equal(r.consecutive_failures, 0, 'an unavailable store is not a check failure');
+      assert.equal(r.last_error, null);
+      assert.equal(Number(r.current_price), 2100, 'stored price is left untouched');
+      assert.equal(r.lock_token, null, 'the claim is released');
+      assert.ok(r.next_check_at > new Date(), 'next attempt is scheduled next interval');
     } finally {
       adapters.getAdapterBySlug = original;
     }
+  });
+
+  test('extract-url rejects unsupported domains', async () => {
+    const res = await call('POST', '/api/products/extract-url', { body: { url: 'https://example.com/foo' } });
+    assert.equal(res.status, 400, JSON.stringify(res.body));
   });
 
   test('concurrent searches record one product and one snapshot per price', async () => {

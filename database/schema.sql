@@ -64,6 +64,10 @@ CREATE TABLE IF NOT EXISTS product_listings (
   mrp DECIMAL(12,2) NULL,
   currency CHAR(3) NOT NULL DEFAULT 'INR',
   availability ENUM('in_stock','out_of_stock','unknown') NOT NULL DEFAULT 'unknown',
+  -- Where the stored price came from: a live check ('live') or the user typing
+  -- it in ('manual', Flipkart). entered_at is when the manual price was entered.
+  source ENUM('live','manual') NOT NULL DEFAULT 'live',
+  entered_at DATETIME NULL,
   rating DECIMAL(2,1) NULL,
   rating_count INT NULL,
   last_checked_at DATETIME NULL,

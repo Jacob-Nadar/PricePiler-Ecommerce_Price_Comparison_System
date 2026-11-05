@@ -1,32 +1,266 @@
+// Flipkart adapter backed by a headless Chromium (Playwright).
+//
+// Flipkart renders its listings with React and ships no API for us, so both the
+// search page and the product page are read after the browser has rendered them:
+//   - search: each result card carries a `data-id` (the product id), the full
+//     title in the image `alt`, and the selling price / MRP as ₹ leaves.
+//   - product page: Flipkart embeds a schema.org Product JSON-LD block (name,
+//     images, brand, rating, price, availability), which is the primary source;
+//     the rendered DOM fills in the MRP (shown without a ₹ sign) and is used as
+//     a fallback when the JSON-LD block is missing.
 const BaseAdapter = require('./baseAdapter');
 const { newPage } = require('../utils/browser');
 const {
   parsePrice,
+  productNameFromFlipkartUrl,
   detectAvailability,
   isBlockedPage,
-  productNameFromFlipkartUrl,
   cleanListingTitle,
   parseRating,
   parseCount,
   validMrp,
 } = require('../utils/scraperUtils');
 const { extractSpecsFromString } = require('../utils/productUtils');
+const { logScraperDebug, safeDiagnosticMessage, safePath } = require('../utils/scraperDebug');
 const { extractProductPageMetadata } = require('../utils/productPageMetadata');
 
 const SEARCH_URL = 'https://www.flipkart.com/search?q=';
 const PRODUCT_BASE = 'https://www.flipkart.com';
+const PAGE_TIMEOUT_MS = 25000;
+const RESULT_WAIT_MS = 8000;
+const MAX_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 1000;
+const MAX_RESULTS = 24;
 
-// Keep only the product path and pid; drop search-session tracking params.
-function cleanFlipkartUrl(value) {
+// Flipkart's bot wall / error page. isBlockedPage() covers captchas and
+// "Access Denied"; these are the Flipkart-specific phrasings.
+const BLOCKED_BODY = /unusual traffic|request blocked|verify (?:that )?you are (?:a )?human|complete the captcha|something went wrong/i;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function normalizeImageUrl(value) {
+  const src = String(value || '').trim();
+  if (!src) return '';
+  if (src.startsWith('//')) return `https:${src}`;
+  return src;
+}
+
+// Canonical product URL: drop tracking params but keep `pid`, so the same
+// listing keeps one key (and one price-history series) across searches.
+function normalizeProductUrl(href) {
+  const raw = String(href || '').trim();
+  if (!raw) return '';
   try {
-    const url = new URL(value);
+    const url = new URL(raw, PRODUCT_BASE);
+    if (url.hostname !== 'flipkart.com' && !url.hostname.endsWith('.flipkart.com')) return '';
     const pid = url.searchParams.get('pid');
-    url.search = pid ? `?pid=${encodeURIComponent(pid)}` : '';
-    url.hash = '';
-    return url.toString();
+    return `${PRODUCT_BASE}${url.pathname}${pid ? `?pid=${encodeURIComponent(pid)}` : ''}`;
   } catch {
-    return value;
+    return '';
   }
+}
+
+// Turns one raw search card (collected inside the browser) into a product in the
+// shape productService expects. Pure so it can be unit-tested without a network.
+function normalizeSearchCard(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const productUrl = normalizeProductUrl(raw.href);
+  const name = cleanListingTitle(String(raw.title || '').trim());
+  if (!productUrl || !name) return null;
+
+  const prices = (Array.isArray(raw.priceTexts) ? raw.priceTexts : [])
+    .map(parsePrice)
+    .filter((value) => value != null && value > 0);
+  const price = prices.length ? prices[0] : null;
+  // The first bigger ₹ amount on the card is the MRP; later amounts are exchange
+  // offers and bank discounts, which validMrp/ordering keep out.
+  const mrp = validMrp(prices.slice(1).find((value) => value > price) ?? null, price);
+
+  const cardText = String(raw.cardText || '');
+  let availability = detectAvailability(cardText);
+  if (availability === 'unknown' && price != null && !/sold out|unavailable/i.test(cardText)) {
+    availability = 'in_stock';
+  }
+
+  return {
+    id: String(raw.id || '').trim() || productUrl,
+    name,
+    brand: '',
+    model: '',
+    category: '',
+    image: normalizeImageUrl(raw.image),
+    specifications: extractSpecsFromString(name),
+    rating: parseRating(raw.ratingText),
+    ratingCount: parseCount(raw.ratingCountText),
+    sponsored: Boolean(raw.sponsored),
+    offers: {
+      flipkart: {
+        price,
+        mrp,
+        availability,
+        url: productUrl,
+      },
+    },
+  };
+}
+
+// Merges the JSON-LD metadata with the rendered DOM into the adapter result.
+// Pure so it can be unit-tested without a network.
+function normalizeExtractedProduct({ url, dom = {}, metadata = null }) {
+  const productUrl = String(url || '').trim();
+  const name = cleanListingTitle(
+    String(metadata?.name || dom.title || productNameFromFlipkartUrl(productUrl) || '').trim()
+  );
+  if (!name) return null;
+
+  const metadataPrice = parsePrice(metadata?.price);
+  const domPrice = parsePrice(dom.priceText);
+  const price = metadataPrice ?? domPrice;
+  const mrp = validMrp(dom.mrpText, price);
+
+  let availability = 'unknown';
+  if (metadata?.availability && metadata.availability !== 'unknown') {
+    availability = metadata.availability;
+  } else {
+    availability = detectAvailability(`${String(dom.availabilityText || '')} ${String(dom.bodyText || '').slice(0, 2000)}`);
+    if (availability === 'unknown' && (dom.addToCart || dom.buyNow)) availability = 'in_stock';
+    if (availability === 'unknown' && price != null) availability = 'in_stock';
+  }
+
+  const specifications = { ...metadata?.specifications, ...extractSpecsFromString(name) };
+
+  return {
+    name,
+    brand: metadata?.brand || '',
+    model: '',
+    category: metadata?.category || '',
+    imageUrl: normalizeImageUrl(metadata?.imageUrl || dom.image),
+    specifications,
+    price: price != null && price > 0 ? price : null,
+    mrp,
+    rating: metadata?.rating ?? parseRating(dom.ratingText),
+    ratingCount: metadata?.ratingCount ?? parseCount(dom.ratingCountText),
+    availability,
+    productUrl,
+    ...(!metadata && price == null
+      ? {
+          sourceNote:
+            'Flipkart did not provide product details. The name was read from the product URL; price and availability could not be verified.',
+        }
+      : {}),
+  };
+}
+
+function urlFallback(url, sourceNote) {
+  const name = productNameFromFlipkartUrl(url);
+  if (!name) return null;
+  return {
+    name,
+    brand: '',
+    model: '',
+    category: '',
+    imageUrl: '',
+    specifications: extractSpecsFromString(name),
+    price: null,
+    availability: 'unknown',
+    productUrl: url,
+    sourceNote,
+  };
+}
+
+// Runs inside the browser: reads every result card on a Flipkart search page.
+function readSearchCards() {
+  const PRICE = /^(?:₹|rs\.?|inr)\s?[\d,]+(?:\.\d+)?$/i;
+  const GENERIC = /^(?:add to compare|compare|sponsored|bestseller|currently unavailable|sold out|coming soon|notify me|hot deal|trending|new|ad|upto|up to)\b/i;
+  const textOf = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
+  const cards = [...document.querySelectorAll('div[data-id]')];
+  const out = [];
+
+  for (const card of cards) {
+    const link = card.querySelector('a[href*="/p/"]');
+    if (!link) continue;
+    const img = card.querySelector('img');
+    const leaves = [...card.querySelectorAll('div,span')].filter((el) => el.children.length === 0);
+    const leafTexts = leaves.map(textOf);
+    const priceTexts = leafTexts.filter((text) => PRICE.test(text));
+    // Titles are also mirrored in the image alt; the text fallback skips badges,
+    // spec bullets and rating fragments that share the card.
+    const title =
+      String(img?.getAttribute('alt') || '').trim() ||
+      String(link.getAttribute('title') || '').trim() ||
+      leafTexts.find(
+        (text) =>
+          text.length >= 8 &&
+          text.length <= 220 &&
+          !GENERIC.test(text) &&
+          !PRICE.test(text) &&
+          !/^\d[\d,.]*\s*(?:ratings?|reviews?)$/i.test(text)
+      ) ||
+      '';
+    const cardText = (card.innerText || card.textContent || '').replace(/\s+/g, ' ');
+    const ratingEl = card.querySelector('[id^="productRating_"]');
+    const countMatch = cardText.match(/([\d,.]+\s*[kKmM]?)\s*(?:ratings?|reviews?)/i);
+
+    out.push({
+      id: card.getAttribute('data-id') || '',
+      href: link.getAttribute('href') || '',
+      title,
+      image: img?.getAttribute('src') || img?.getAttribute('data-src') || '',
+      priceTexts,
+      ratingText: ratingEl ? ratingEl.textContent : '',
+      ratingCountText: countMatch ? countMatch[0] : '',
+      cardText,
+      sponsored: /\bsponsored\b/i.test(cardText),
+    });
+  }
+  return out;
+}
+
+// Runs inside the browser: reads the parts of a product page the JSON-LD block
+// does not carry (notably the MRP, which is rendered without a ₹ sign).
+function readProductDom() {
+  const PRICE = /^(?:₹|rs\.?|inr)\s?[\d,]+(?:\.\d+)?$/i;
+  const textOf = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
+  const leaves = [...document.querySelectorAll('div,span')].filter((el) => el.children.length === 0);
+
+  const priced = leaves
+    .map((el) => ({ text: textOf(el), size: parseFloat(getComputedStyle(el).fontSize) || 0 }))
+    .filter((entry) => PRICE.test(entry.text))
+    // The selling price is rendered far larger than fees, EMI lines and the MRP.
+    .sort((a, b) => b.size - a.size);
+
+  const mrp = leaves
+    .map((el) => ({ text: textOf(el), strike: getComputedStyle(el).textDecorationLine || '' }))
+    .filter((entry) => /^[\d,]+(?:\.\d+)?$/.test(entry.text) && entry.strike.includes('line-through'))
+    .sort(
+      (a, b) =>
+        Number(String(b.text).replace(/[^\d.]/g, '')) - Number(String(a.text).replace(/[^\d.]/g, ''))
+    );
+
+  const bodyText = (document.body.innerText || '').replace(/\s+/g, ' ');
+  const buttonTexts = [...document.querySelectorAll('button, a, div')]
+    .filter((el) => el.children.length === 0)
+    .map(textOf)
+    .filter((text) => /^(?:buy now|add to cart|add to bag|sold out|notify me|coming soon)$/i.test(text));
+  const joinedButtons = buttonTexts.join(' ');
+  const h1 = document.querySelector('h1');
+  const img = document.querySelector('img[src*="flixcart"]');
+  const ratingMatch =
+    bodyText.match(/([1-5](?:\.\d)?)\s*\|\s*([\d,]+)/) ||
+    bodyText.match(/([1-5](?:\.\d)?)\s*([\d,]+)\s*ratings?/i);
+
+  return {
+    title: h1 ? textOf(h1) : '',
+    priceText: priced[0] ? priced[0].text : '',
+    mrpText: mrp[0] ? mrp[0].text : '',
+    image: img?.getAttribute('src') || '',
+    bodyText: bodyText.slice(0, 4000),
+    availabilityText: joinedButtons,
+    addToCart: /add to (?:cart|bag)/i.test(joinedButtons),
+    buyNow: /buy now/i.test(joinedButtons),
+    ratingText: ratingMatch ? ratingMatch[1] : '',
+    ratingCountText: ratingMatch ? ratingMatch[2] : '',
+  };
 }
 
 class FlipkartAdapter extends BaseAdapter {
@@ -35,384 +269,205 @@ class FlipkartAdapter extends BaseAdapter {
   }
 
   async search(query, _options = {}) {
-    if (!query || !String(query).trim()) return [];
-    const q = encodeURIComponent(String(query).trim());
-    const url = `${SEARCH_URL}${q}`;
+    const q = String(query || '').trim();
+    if (!q) return [];
+    const url = `${SEARCH_URL}${encodeURIComponent(q)}&marketplace=FLIPKART`;
+    const startedAt = Date.now();
 
-    const { page, context } = await newPage();
-    try {
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      if (response && (response.status() === 403 || response.status() === 429 || response.status() >= 500)) {
-        throw Object.assign(new Error(`Flipkart returned HTTP ${response.status()} for the live search.`), { status: 503 });
-      }
-      await page.waitForSelector('a[href*="/p/"]', { timeout: 7000 }).catch(() => {});
-
-      const { title, bodyText } = await page.evaluate(() => ({
-        title: document.title,
-        bodyText: document.body.innerText,
-      }));
-      if (isBlockedPage(title, bodyText, url)) {
-        throw Object.assign(new Error('Flipkart blocked the live search request. Try again later.'), { status: 503 });
-      }
-
-      const items = await page.evaluate(() => {
-        const links = [...document.querySelectorAll('a[href*="/p/"]')];
-        const cards = [];
-        const seenProducts = new Set();
-        const ownText = (el) =>
-          [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();
-        const productKey = (href) => (href || '').split('?')[0];
-
-        for (const link of links) {
-          const href = link.getAttribute('href') || '';
-          const key = productKey(href);
-          if (!key || seenProducts.has(key)) continue;
-
-          // Walk up until the container would include a different product.
-          let card = link;
-          for (let i = 0; i < 8; i++) {
-            const parent = card.parentElement;
-            if (!parent) break;
-            const keys = new Set(
-              [...parent.querySelectorAll('a[href*="/p/"]')].map((a) => productKey(a.getAttribute('href')))
-            );
-            if (keys.size > 1) break;
-            card = parent;
-          }
-
-          const leaves = [...card.querySelectorAll('div, span, a')]
-            .filter((el) => el.children.length === 0)
-            .map((el) => ({
-              text: el.textContent.trim(),
-              struck: window.getComputedStyle(el).textDecorationLine.includes('line-through'),
-            }))
-            .filter((leaf) => leaf.text);
-
-          const titleAttr = [...card.querySelectorAll('a[title]')]
-            .map((a) => a.getAttribute('title').trim())
-            .find(Boolean);
-          const imgAlt = card.querySelector('img[alt]')?.getAttribute('alt')?.trim() || '';
-          const leafTitle = leaves.find((leaf) => {
-            const t = leaf.text;
-            return (
-              t.length > 8 && t.length < 200 && !t.startsWith('₹') &&
-              !/^(add to compare|currently unavailable|sponsored|bestseller)$/i.test(t) &&
-              !/^[\d,]+\s*(ratings?|reviews?)$/i.test(t) && !/% off$/i.test(t)
-            );
-          })?.text;
-          const titleText = titleAttr || (imgAlt.length > 8 ? imgAlt : '') || leafTitle || '';
-          if (!titleText) continue;
-
-          // Grid (fashion/home) cards show the brand as a short label above the title.
-          let brand = '';
-          const titleIndex = leaves.findIndex((leaf) => leaf.text === titleText);
-          if (titleIndex > 0) {
-            const candidate = leaves[titleIndex - 1].text;
-            const isStatusLabel =
-              /compare|sponsored|^ad$|unavailable|sold out|coming soon|notify|bestseller|trending|% off|ratings?$/i.test(candidate);
-            if (candidate.length <= 30 && !candidate.startsWith('₹') && !isStatusLabel) {
-              brand = candidate;
-            }
-          }
-
-          // Selling price comes first; a second ₹ value is the list price only
-          // when it is struck through or the card shows a "% off" label.
-          // Values after "Upto"/"Exchange" are exchange or bank offers.
-          const priceLeaves = [];
-          for (const leaf of leaves) {
-            if (/^upto$|^up to$|exchange|bank offer/i.test(leaf.text)) break;
-            if (/^₹\s*[\d,]+(\.\d+)?$/.test(leaf.text)) priceLeaves.push(leaf);
-          }
-          const priceLeaf = priceLeaves.find((leaf) => !leaf.struck) || priceLeaves[0] || null;
-          const discountText = leaves.find((leaf) => /^\d+%\s*off$/i.test(leaf.text))?.text || '';
-          const mrpLeaf = priceLeaves.find((leaf) => leaf !== priceLeaf && (leaf.struck || discountText));
-
-          const ratingText =
-            [...card.querySelectorAll('div, span')].map(ownText).find((t) => /^[1-5](\.\d)?$/.test(t)) || '';
-          const ratingCountText =
-            leaves.find((leaf) => /^[\d,]+\s*ratings?$/i.test(leaf.text))?.text ||
-            leaves.find((leaf) => /^\([\d,]+\)$/.test(leaf.text))?.text ||
-            '';
-
-          const img = card.querySelector('img');
-          const cardText = (card.innerText || '').toLowerCase();
-          let availText = '';
-          if (
-            cardText.includes('currently unavailable') ||
-            cardText.includes('sold out') ||
-            cardText.includes('out of stock') ||
-            cardText.includes('notify me') ||
-            cardText.includes('currently not available')
-          ) {
-            availText = 'out of stock';
-          } else if (priceLeaf) {
-            // Flipkart only shows a selling price on purchasable listings.
-            availText = 'in stock';
-          }
-
-          seenProducts.add(key);
-          cards.push({
-            title: titleText,
-            brand,
-            href,
-            image: img ? img.getAttribute('src') : '',
-            priceText: priceLeaf ? priceLeaf.text : '',
-            mrpText: mrpLeaf ? mrpLeaf.text : '',
-            ratingText,
-            ratingCountText,
-            sponsored: /\bsponsored\b/.test(cardText),
-            availText,
-          });
-          if (cards.length >= 24) break;
-        }
-        return cards;
-      });
-
-      return items
-        .map((it) => ({ ...it, title: cleanListingTitle(it.title) }))
-        .filter((it) => it.title)
-        .map((it) => {
-          const rawUrl = it.href.startsWith('http') ? it.href : `${PRODUCT_BASE}${it.href}`;
-          const productUrl = cleanFlipkartUrl(rawUrl);
-          const price = parsePrice(it.priceText);
-          const brand = it.brand && !/^[\d.]+$/.test(it.brand) ? it.brand : '';
-          const name =
-            brand && !it.title.toLowerCase().includes(brand.toLowerCase()) ? `${brand} ${it.title}` : it.title;
-          const specs = extractSpecsFromString(name);
-          const availability = price == null ? 'unknown' : detectAvailability(it.availText);
-          return {
-            id: productUrl,
-            name,
-            brand,
-            model: '',
-            category: '',
-            image: it.image,
-            specifications: specs,
-            rating: parseRating(it.ratingText),
-            ratingCount: parseCount(it.ratingCountText),
-            sponsored: Boolean(it.sponsored),
-            offers: {
-              flipkart: {
-                price,
-                mrp: validMrp(it.mrpText, price),
-                availability,
-                url: productUrl,
-              },
-            },
-          };
+    let attempts = 0;
+    while (attempts < MAX_ATTEMPTS) {
+      attempts++;
+      let context;
+      try {
+        const opened = await newPage();
+        context = opened.context;
+        const { page } = opened;
+        const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT_MS });
+        const status = response?.status() ?? null;
+        logScraperDebug('flipkart', 'search-response', {
+          status,
+          path: safePath(page.url()),
+          attempt: attempts,
+          elapsedMs: Date.now() - startedAt,
         });
-    } finally {
-      await context.close().catch(() => {});
-    }
-  }
 
-  // Flipkart product pages render their details lazily, so a headless load often
-  // sees only the page shell (and a promo price in og:title). Search cards render
-  // reliably, so look the product up by its slug and match the exact item id.
-  async lookupListing(url) {
-    const itemId = String(url).match(/\/p\/(itm[a-z0-9]+)/i)?.[1]?.toLowerCase();
-    const name = productNameFromFlipkartUrl(url);
-    if (!itemId || !name) return null;
-    let listings;
-    try {
-      listings = await this.search(name);
-    } catch {
-      return null;
+        if (response && (status === 403 || status === 429 || status >= 500)) {
+          if (attempts < MAX_ATTEMPTS) {
+            await sleep(RETRY_DELAY_MS);
+            continue;
+          }
+          throw Object.assign(new Error(`Flipkart returned HTTP ${status} for the live search.`), { status: 503 });
+        }
+
+        await page.waitForSelector('div[data-id]', { timeout: RESULT_WAIT_MS }).catch(() => {});
+
+        const { title, bodyText, currentUrl } = await page.evaluate(() => ({
+          title: document.title,
+          bodyText: document.body.innerText,
+          currentUrl: window.location.href,
+        }));
+
+        if (isBlockedPage(title, bodyText, currentUrl) || BLOCKED_BODY.test(String(bodyText).slice(0, 1500))) {
+          logScraperDebug('flipkart', 'search-blocked', {
+            title: String(title).slice(0, 120),
+            attempt: attempts,
+            elapsedMs: Date.now() - startedAt,
+          });
+          if (attempts < MAX_ATTEMPTS) {
+            await sleep(RETRY_DELAY_MS);
+            continue;
+          }
+          throw Object.assign(new Error('Flipkart blocked the live search request. Try again later.'), {
+            status: 503,
+          });
+        }
+
+        const rawCards = await page.evaluate(readSearchCards);
+        const results = rawCards
+          .map(normalizeSearchCard)
+          .filter(Boolean)
+          .slice(0, MAX_RESULTS);
+
+        logScraperDebug('flipkart', 'search-parsed', {
+          cards: rawCards.length,
+          returned: results.length,
+          elapsedMs: Date.now() - startedAt,
+        });
+        return results;
+      } catch (err) {
+        logScraperDebug('flipkart', 'search-error', {
+          status: err.status || null,
+          message: safeDiagnosticMessage(err.message),
+          attempt: attempts,
+          elapsedMs: Date.now() - startedAt,
+        });
+        if (attempts >= MAX_ATTEMPTS) {
+          if (!err.status) {
+            err.status = 502;
+            err.message = `Could not load Flipkart search results: ${err.message}`;
+          }
+          throw err;
+        }
+      } finally {
+        if (context) await context.close().catch(() => {});
+      }
     }
-    const listing = listings.find((item) =>
-      String(item.offers?.flipkart?.url || '').toLowerCase().includes(`/p/${itemId}`)
-    );
-    if (!listing) return null;
-    const offer = listing.offers.flipkart;
-    return {
-      name: listing.name,
-      brand: listing.brand || '',
-      model: '',
-      category: '',
-      imageUrl: listing.image || '',
-      specifications: listing.specifications || {},
-      price: offer.price,
-      mrp: offer.mrp ?? null,
-      rating: listing.rating ?? null,
-      ratingCount: listing.ratingCount ?? null,
-      availability: offer.availability,
-      productUrl: url,
-      sourceNote: 'Live price and stock read from the Flipkart listing for this product.',
-    };
+    return [];
   }
 
   async extractFromUrl(url) {
-    const listing = await this.lookupListing(url);
-    if (listing) return listing;
+    const cleanUrl = String(url || '').trim();
+    const startedAt = Date.now();
+    let attempts = 0;
 
-    let context;
-    try {
-      const opened = await newPage();
-      context = opened.context;
-      const { page } = opened;
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      if (response && (response.status() === 403 || response.status() === 429 || response.status() >= 500)) {
-        const fallbackName = productNameFromFlipkartUrl(url);
-        if (fallbackName) {
-          return {
-            name: fallbackName,
-            brand: '',
-            model: '',
-            category: '',
-            imageUrl: '',
-            specifications: extractSpecsFromString(fallbackName),
-            price: null,
-            availability: 'unknown',
-            productUrl: url,
-            sourceNote: 'Flipkart is temporarily unavailable. The product name was inferred from the URL; price and stock are unverified.',
-          };
-        }
-        throw Object.assign(new Error(`Flipkart returned HTTP ${response.status()} for the product page.`), { status: 503 });
-      }
-      await page.waitForSelector('h1, [class*="VU-ZEz"], [class*="B_NuCI"]', { timeout: 7000 }).catch(() => {});
-
-      const { title, bodyText } = await page.evaluate(() => ({
-        title: document.title,
-        bodyText: document.body.innerText,
-      }));
-      const metadata = extractProductPageMetadata(await page.content());
-      if (isBlockedPage(title, bodyText, url)) {
-        if (metadata) {
-          return {
-            ...metadata,
-            model: '',
-            productUrl: url,
-            sourceNote: 'Product details were read from structured page metadata; confirm price and stock on the store page.',
-          };
-        }
-        const fallbackName = productNameFromFlipkartUrl(url);
-        if (fallbackName) {
-          return {
-            name: fallbackName,
-            brand: '',
-            model: '',
-            category: '',
-            imageUrl: '',
-            specifications: extractSpecsFromString(fallbackName),
-            price: null,
-            availability: 'unknown',
-            productUrl: url,
-            sourceNote: 'The store page could not be read. The product name was inferred from the URL; price and stock are unverified.',
-          };
-        }
-        throw Object.assign(new Error('Flipkart blocked the product page request. Try again later.'), { status: 503 });
-      }
-
-      const data = await page.evaluate(() => {
-        // og:meta is the most reliable source for Flipkart PDP (content is JS-rendered)
-        const ogTitle = document.querySelector('meta[property="og:title"]')?.content || '';
-        const ogImage = document.querySelector('meta[property="og:image"]')?.content || '';
-
-        const titleEl =
-          document.querySelector('span.VU-ZEz') ||
-          document.querySelector('h1.yhB1nd span') ||
-          document.querySelector('.B_NuCI') ||
-          document.querySelector('[class*="VU-ZEz"]');
-        const titleText = titleEl
-          ? titleEl.textContent.trim()
-          : (document.querySelector('h1')?.textContent?.trim() || '');
-
-        const structuredPrice =
-          document.querySelector('meta[property="product:price:amount"]')?.content ||
-          document.querySelector('meta[itemprop="price"]')?.content ||
-          '';
-        const currentPrice = document.querySelector('[class*="Nx9bqj"]');
-        const priceEls = [...document.querySelectorAll('[class*="Nx9bqj"], [class*="CEmiEU"]')].filter((el) => {
-          const t = el.textContent.trim();
-          const struckThrough = window.getComputedStyle(el).textDecorationLine.includes('line-through');
-          return t.startsWith('₹') && t.length < 20 && el.children.length === 0 &&
-            !el.closest('[class*="yRaY8j"]') && !struckThrough;
+    while (attempts < MAX_ATTEMPTS) {
+      attempts++;
+      const { page, context } = await newPage();
+      try {
+        const response = await page.goto(cleanUrl, { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT_MS });
+        const status = response?.status() ?? null;
+        logScraperDebug('flipkart', 'extract-response', {
+          status,
+          path: safePath(page.url()),
+          attempt: attempts,
+          elapsedMs: Date.now() - startedAt,
         });
-        let priceText = structuredPrice || currentPrice?.textContent || (priceEls.length > 0 ? priceEls[0].textContent : '');
 
-        // Fallback title from og:title (e.g. "Apple iPhone 15 | BBD's ₹63,999 Premium Value Pick").
-        // The ₹ amount there is a sale-campaign banner, not the listing price, so it is not used.
-        let finalTitle = titleText;
-        if (!finalTitle && ogTitle) {
-          finalTitle = ogTitle.split('|')[0].trim();
+        if (response && (status === 403 || status === 429 || status >= 500)) {
+          if (attempts < MAX_ATTEMPTS) {
+            await sleep(RETRY_DELAY_MS);
+            continue;
+          }
+          const fallback = urlFallback(
+            cleanUrl,
+            'Flipkart could not be reached. The product name was inferred from the URL; price and stock are unverified.'
+          );
+          if (fallback) return fallback;
+          throw Object.assign(new Error(`Flipkart returned HTTP ${status} for the product page.`), {
+            status: 503,
+          });
         }
 
-        // Product photos are served from Flipkart's rukminim CDN; anything else
-        // (site logo, category icons, inline SVGs) is page chrome.
-        const imgEl =
-          document.querySelector('img._396cs4') ||
-          document.querySelector('div._3li7GG img') ||
-          document.querySelector('img._2r_T1I') ||
-          document.querySelector('img.CXW8mj') ||
-          document.querySelector('img[src*="rukminim"]');
-        const image = (imgEl ? imgEl.getAttribute('src') : '') || ogImage || '';
+        await page.waitForSelector('h1, script[type="application/ld+json"]', { timeout: RESULT_WAIT_MS }).catch(() => {});
 
-        const pageText = (document.body.innerText || '').slice(0, 4000).toLowerCase();
-        let availText = '';
-        if (
-          pageText.includes('currently unavailable') ||
-          pageText.includes('sold out') ||
-          pageText.includes('out of stock') ||
-          pageText.includes('notify me')
-        ) {
-          availText = 'out of stock';
-        } else if (pageText.includes('add to cart') || pageText.includes('buy now')) {
-          availText = 'in stock';
+        const { title, bodyText, currentUrl } = await page.evaluate(() => ({
+          title: document.title,
+          bodyText: document.body.innerText,
+          currentUrl: window.location.href,
+        }));
+
+        if (isBlockedPage(title, bodyText, currentUrl) || BLOCKED_BODY.test(String(bodyText).slice(0, 1500))) {
+          logScraperDebug('flipkart', 'extract-blocked', {
+            title: String(title).slice(0, 120),
+            attempt: attempts,
+            elapsedMs: Date.now() - startedAt,
+          });
+          if (attempts < MAX_ATTEMPTS) {
+            await sleep(RETRY_DELAY_MS);
+            continue;
+          }
+          const fallback = urlFallback(
+            cleanUrl,
+            'Flipkart blocked the product page. The product name was inferred from the URL; price and stock are unverified.'
+          );
+          if (fallback) return fallback;
+          throw Object.assign(new Error('Flipkart blocked the product page request. Try again later.'), {
+            status: 503,
+          });
         }
 
-        return { title: finalTitle, image, priceText, availText };
-      });
+        const metadata = extractProductPageMetadata(await page.content());
+        const dom = await page.evaluate(readProductDom);
+        const product = normalizeExtractedProduct({ url: cleanUrl, dom, metadata });
 
-      const productName = data.title || metadata?.name;
-      if (!productName) return null;
-      const price = parsePrice(data.priceText) ?? metadata?.price ?? null;
-      const detectedAvailability = detectAvailability(data.availText);
-      const availability =
-        detectedAvailability !== 'unknown'
-          ? detectedAvailability
-          : metadata?.availability || 'unknown';
-      // The URL slug keeps the variant ("apple-iphone-15-blue-128-gb") that og:title drops.
-      const specs = {
-        ...extractSpecsFromString(productNameFromFlipkartUrl(url)),
-        ...extractSpecsFromString(productName),
-      };
+        if (!product) {
+          logScraperDebug('flipkart', 'extract-empty-product', {
+            title: String(title).slice(0, 120),
+            elapsedMs: Date.now() - startedAt,
+          });
+          return urlFallback(
+            cleanUrl,
+            'Flipkart did not provide product details. The name was read from the product URL; price and availability could not be verified.'
+          );
+        }
 
-      return {
-        name: productName,
-        brand: metadata?.brand || '',
-        model: '',
-        category: metadata?.category || '',
-        imageUrl: data.image || metadata?.imageUrl || '',
-        specifications: { ...metadata?.specifications, ...specs },
-        price,
-        availability,
-        productUrl: url,
-        ...(!data.title
-          ? { sourceNote: 'Product details were read from structured page metadata; confirm price and stock on the store page.' }
-          : {}),
-      };
-    } catch (err) {
-      console.warn('[flipkart] extractFromUrl failed:', err.message);
-      const fallbackName = productNameFromFlipkartUrl(url);
-      if (fallbackName) {
-        return {
-          name: fallbackName,
-          brand: '',
-          model: '',
-          category: '',
-          imageUrl: '',
-          specifications: extractSpecsFromString(fallbackName),
-          price: null,
-          availability: 'unknown',
-          productUrl: url,
-          sourceNote: 'Flipkart could not be reached. The product name was inferred from the URL; price and stock are unverified.',
-        };
+        logScraperDebug('flipkart', 'extract-parsed', {
+          hasMetadata: Boolean(metadata),
+          hasPrice: product.price != null,
+          availability: product.availability,
+          hasImage: Boolean(product.imageUrl),
+          elapsedMs: Date.now() - startedAt,
+        });
+        return product;
+      } catch (err) {
+        logScraperDebug('flipkart', 'extract-error', {
+          status: err.status || null,
+          message: safeDiagnosticMessage(err.message),
+          attempt: attempts,
+          elapsedMs: Date.now() - startedAt,
+        });
+        if (attempts >= MAX_ATTEMPTS) {
+          const fallback = urlFallback(
+            cleanUrl,
+            'Flipkart could not be reached. The product name was inferred from the URL; price and stock are unverified.'
+          );
+          if (fallback) return fallback;
+          if (!err.status) {
+            err.status = 502;
+            err.message = `Could not load the Flipkart product page: ${err.message}`;
+          }
+          throw err;
+        }
+      } finally {
+        await context.close().catch(() => {});
       }
-      throw err;
-    } finally {
-      if (context) await context.close().catch(() => {});
     }
+    return null;
   }
 }
 
 module.exports = FlipkartAdapter;
+// Pure parsers, exported for unit tests.
+module.exports.normalizeSearchCard = normalizeSearchCard;
+module.exports.normalizeExtractedProduct = normalizeExtractedProduct;
+module.exports.normalizeProductUrl = normalizeProductUrl;

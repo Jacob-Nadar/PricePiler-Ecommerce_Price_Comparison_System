@@ -89,6 +89,10 @@ function extractProductPageMetadata(html) {
     '';
   const brand = firstText(product?.brand);
   const category = firstText(product?.category);
+  const ratingValue = Number(product?.aggregateRating?.ratingValue);
+  const ratingCountValue = Number(
+    product?.aggregateRating?.ratingCount ?? product?.aggregateRating?.reviewCount
+  );
   const availability =
     structuredOffers.availability !== 'unknown'
       ? structuredOffers.availability
@@ -115,6 +119,8 @@ function extractProductPageMetadata(html) {
     imageUrl: image,
     price: structuredOffers.price ?? metaPrice,
     availability,
+    rating: ratingValue > 0 && ratingValue <= 5 ? ratingValue : null,
+    ratingCount: Number.isInteger(ratingCountValue) && ratingCountValue > 0 ? ratingCountValue : null,
     specifications,
     description: firstText(product?.description),
   };

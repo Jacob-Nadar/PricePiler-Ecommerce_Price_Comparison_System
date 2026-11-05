@@ -37,9 +37,31 @@ test('extracts generic product metadata and offer from JSON-LD graphs', () => {
     imageUrl: 'https://images.example/bedsheet.jpg',
     price: 1299,
     availability: 'in_stock',
+    rating: null,
+    ratingCount: null,
     specifications: { color: 'Ivory', thread_count: '300' },
     description: '',
   });
+});
+
+test('extracts aggregate rating from JSON-LD', () => {
+  const html = `
+    <html><head>
+      <script type="application/ld+json">
+        ${JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: 'Rated product',
+          offers: { '@type': 'Offer', price: '499', availability: 'https://schema.org/InStock' },
+          aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.4', reviewCount: '1200' },
+        })}
+      </script>
+    </head></html>
+  `;
+
+  const metadata = extractProductPageMetadata(html);
+  assert.equal(metadata.rating, 4.4);
+  assert.equal(metadata.ratingCount, 1200);
 });
 
 test('extracts title and image from open graph when product JSON-LD is unavailable', () => {

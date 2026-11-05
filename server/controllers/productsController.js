@@ -178,7 +178,7 @@ const extractUrl = asyncHandler(async (req, res) => {
 
   await adapters.ensureLoaded();
   const adapter = adapters.getAdapterBySlug(storeSlug);
-  if (!adapter || !adapter.isAvailable()) {
+  if (!adapter) {
     return res.status(503).json({
       success: false,
       error: 'Live store adapter is not available for this URL.',
@@ -238,14 +238,15 @@ async function loadStoredProduct(id) {
   const [product] = await db.query('SELECT id, name, brand, category, image_url, specifications FROM products WHERE id = ?', [id]);
   if (!product) return null;
   const listings = await db.query(
-    `SELECT l.id, l.title, l.product_url, l.image_url, l.current_price, l.mrp, l.availability, l.rating, l.rating_count,
-            l.last_success_at, l.variant_label, l.external_id, r.slug, r.name AS store_name
+    `SELECT l.id, l.title, l.product_url, l.image_url, l.current_price, l.mrp, l.availability,
+            l.rating, l.rating_count, l.last_success_at, l.variant_label, l.external_id, r.slug, r.name AS store_name
        FROM product_listings l JOIN retailers r ON r.id = l.retailer_id WHERE l.product_id = ?`,
     [id]
   );
   const offers = listings.map((l) => ({
     id: l.id,
     listingId: l.id,
+    productId: product.id,
     storeSlug: l.slug,
     storeName: l.store_name,
     externalId: l.external_id,

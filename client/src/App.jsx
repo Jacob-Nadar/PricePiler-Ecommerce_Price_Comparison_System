@@ -37,8 +37,9 @@ function ScrollToTop() {
 function NotFound() {
   return (
     <div className="container-page max-w-3xl py-24 text-center">
-      <p className="font-display text-6xl font-extrabold text-brand-600">404</p>
-      <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">Page not found</h1>
+      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400">Error 404</p>
+      <p className="mt-2 font-display text-6xl font-semibold text-slate-900 dark:text-white">404</p>
+      <h1 className="mt-3 text-xl font-semibold text-slate-900 dark:text-white">Page not found</h1>
       <p className="mt-2 text-slate-500 dark:text-slate-400">The page you are looking for does not exist.</p>
       <Link to="/" className="btn-primary mt-6">
         Back to home

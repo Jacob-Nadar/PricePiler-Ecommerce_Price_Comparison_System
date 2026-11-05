@@ -12,14 +12,24 @@ const NAV_LINKS = [
   { category: 'Grocery & Pantry', label: 'Grocery' },
 ];
 
+export function LogoMark({ className = 'h-8 w-8' }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+      <rect width="32" height="32" rx="8" className="fill-slate-900 dark:fill-slate-100" />
+      <rect x="7.5" y="8.5" width="4.5" height="16.5" rx="1.5" className="fill-white/90 dark:fill-slate-950/90" />
+      <rect x="13.75" y="13.5" width="4.5" height="11.5" rx="1.5" className="fill-brand-400" />
+      <rect x="20" y="18" width="4.5" height="7" rx="1.5" className="fill-white/90 dark:fill-slate-950/90" />
+    </svg>
+  );
+}
+
 export function Logo({ className = '' }) {
   return (
-    <Link to="/" className={`flex items-center gap-2 ${className}`} aria-label="PricePiler home">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 font-display text-lg font-extrabold text-white shadow-md shadow-brand-600/30">
-        ₹
-      </span>
-      <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-        Price<span className="text-brand-600 dark:text-brand-400">Piler</span>
+    <Link to="/" className={`group flex items-center gap-2.5 ${className}`} aria-label="PricePiler home">
+      <LogoMark className="h-8 w-8 transition-transform duration-300 group-hover:-translate-y-0.5" />
+      <span className="flex items-baseline font-display text-[19px] font-bold tracking-[-0.03em] text-slate-900 dark:text-white">
+        PricePiler
+        <span className="ml-1 h-1 w-1 translate-y-[-2px] rounded-[1px] bg-brand-500" aria-hidden="true" />
       </span>
     </Link>
   );
@@ -48,7 +58,7 @@ function UserMenu({ user, onLogout }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-sm ring-2 ring-white transition-transform hover:scale-105 dark:ring-slate-950"
+        className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 font-mono text-xs font-semibold text-white ring-1 ring-slate-900/10 transition-colors hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:ring-white/10 dark:hover:bg-white"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
@@ -56,7 +66,7 @@ function UserMenu({ user, onLogout }) {
         {initials}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-60 animate-slide-up rounded-2xl border border-slate-200 bg-white p-2 shadow-lift dark:border-slate-700 dark:bg-slate-900" role="menu">
+        <div className="absolute right-0 mt-2 w-60 animate-slide-up rounded-xl border border-slate-200 bg-white p-2 shadow-lift dark:border-slate-700 dark:bg-slate-900" role="menu">
           <div className="px-3 py-2">
             <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{user.fullName}</p>
             <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
@@ -113,18 +123,18 @@ export default function Navbar() {
   const activeCategory =
     location.pathname === '/search' ? new URLSearchParams(location.search).get('category') : null;
   const linkClass = ({ isActive }) =>
-    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+    `rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${
       isActive
-        ? 'text-brand-700 dark:text-brand-300'
-        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+        ? 'bg-slate-100 text-slate-900 dark:bg-slate-800/70 dark:text-white'
+        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-white'
     }`;
 
   return (
     <header
       className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-all ${
         scrolled
-          ? 'border-slate-200/80 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/85'
-          : 'border-transparent bg-white/60 dark:bg-slate-950/60'
+          ? 'border-slate-200 bg-white/90 shadow-soft dark:border-slate-800 dark:bg-slate-950/90'
+          : 'border-transparent bg-slate-50/80 dark:bg-slate-950/80'
       }`}
     >
       <div className="container-page">

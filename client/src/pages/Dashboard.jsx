@@ -57,7 +57,7 @@ function SavedList({ items, onRemove }) {
     <ul className="space-y-3">
       {items.map((item) => (
         <li key={item.productId} className="card flex gap-4 p-4">
-          <Link to={`/product/${item.productId}`} className="h-20 w-20 shrink-0 rounded-xl border border-slate-100 bg-white p-2 dark:border-slate-800">
+          <Link to={`/product/${item.productId}`} className="h-20 w-20 shrink-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950">
             <ProductImage src={item.imageUrl} alt={item.name} className="h-full w-full" />
           </Link>
           <div className="min-w-0 flex-1">
@@ -67,7 +67,7 @@ function SavedList({ items, onRemove }) {
             <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
               {item.bestOffer ? (
                 <>
-                  <span className="font-display text-lg font-bold text-slate-900 dark:text-white">{formatPriceINR(item.bestOffer.price)}</span>
+                  <span className="num text-lg font-semibold text-slate-900 dark:text-white">{formatPriceINR(item.bestOffer.price)}</span>
                   <span className="text-slate-500 dark:text-slate-400">at {shortStoreName(item.bestOffer.storeName)}</span>
                 </>
               ) : (
@@ -80,7 +80,7 @@ function SavedList({ items, onRemove }) {
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
               <PriceAlertButton
                 product={savedToProduct(item)}
-                className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300"
+                className="inline-flex items-center gap-1 font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300"
               />
               <button type="button" onClick={() => onRemove(item)} className="inline-flex items-center gap-1 font-semibold text-slate-500 hover:text-rose-600">
                 <Icon name="trash" className="h-3.5 w-3.5" /> Remove
@@ -102,7 +102,7 @@ function TargetEditor({ alert, onSave }) {
   const [busy, setBusy] = useState(false);
   if (!editing) {
     return (
-      <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+      <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-1 font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
         Edit target
       </button>
     );
@@ -141,7 +141,7 @@ function PriceAlerts({ items, onAction, onEdit, onDelete }) {
         return (
           <li key={a.id} className={`card p-4 ${a.status === 'cancelled' ? 'opacity-70' : ''}`}>
             <div className="flex gap-4">
-              <Link to={`/product/${a.productId}`} className="h-16 w-16 shrink-0 rounded-xl border border-slate-100 bg-white p-1.5 dark:border-slate-800">
+              <Link to={`/product/${a.productId}`} className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white p-1.5 dark:border-slate-800 dark:bg-slate-950">
                 <ProductImage src={a.imageUrl} alt={a.productName} className="h-full w-full" />
               </Link>
               <div className="min-w-0 flex-1">
@@ -154,21 +154,21 @@ function PriceAlerts({ items, onAction, onEdit, onDelete }) {
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
                   <div>
                     <div className="text-slate-400">Target</div>
-                    <div className="font-display text-base font-bold text-slate-900 dark:text-white">{formatPriceINR(a.targetPrice)}</div>
+                    <div className="num text-base font-semibold text-slate-900 dark:text-white">{formatPriceINR(a.targetPrice)}</div>
                   </div>
                   <div>
                     <div className="text-slate-400">Current</div>
-                    <div className={`font-display text-base font-bold ${reached ? 'text-deal-600 dark:text-deal-500' : 'text-slate-900 dark:text-white'}`}>
+                    <div className={`num text-base font-semibold ${reached ? 'text-deal-600 dark:text-deal-500' : 'text-slate-900 dark:text-white'}`}>
                       {a.currentPrice != null ? formatPriceINR(a.currentPrice) : '—'}
                     </div>
                   </div>
                   <div>
                     <div className="text-slate-400">Watching</div>
-                    <div className="font-semibold text-slate-700 dark:text-slate-200">{a.scope === 'all' ? 'Any store' : shortStoreName(a.retailerName)}</div>
+                    <div className="text-[13px] font-medium text-slate-700 dark:text-slate-200">{a.scope === 'all' ? 'Any store' : shortStoreName(a.retailerName)}</div>
                   </div>
                   <div>
                     <div className="text-slate-400">Last emailed</div>
-                    <div className="font-semibold text-slate-700 dark:text-slate-200">{a.lastNotifiedAt ? timeAgo(a.lastNotifiedAt) : 'Not yet'}</div>
+                    <div className="text-[13px] font-medium text-slate-700 dark:text-slate-200">{a.lastNotifiedAt ? timeAgo(a.lastNotifiedAt) : 'Not yet'}</div>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
@@ -215,7 +215,7 @@ function StockAlerts({ items, onAction, onDelete }) {
     <ul className="space-y-3">
       {items.map((s) => (
         <li key={s.id} className={`card flex gap-4 p-4 ${s.status === 'cancelled' ? 'opacity-70' : ''}`}>
-          <Link to={`/product/${s.productId}`} className="h-16 w-16 shrink-0 rounded-xl border border-slate-100 bg-white p-1.5 dark:border-slate-800">
+          <Link to={`/product/${s.productId}`} className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white p-1.5 dark:border-slate-800 dark:bg-slate-950">
             <ProductImage src={s.imageUrl} alt={s.productName} className="h-full w-full" />
           </Link>
           <div className="min-w-0 flex-1">
@@ -229,7 +229,7 @@ function StockAlerts({ items, onAction, onDelete }) {
               <StoreBadge slug={s.retailerSlug} name={s.retailerName} size="sm" />
               {s.variant && <span className="text-slate-400">{s.variant}</span>}
               <AvailabilityBadge status={s.availability} />
-              {s.currentPrice != null && <span className="font-semibold text-slate-700 dark:text-slate-200">{formatPriceINR(s.currentPrice)}</span>}
+              {s.currentPrice != null && <span className="num text-[13px] font-medium text-slate-700 dark:text-slate-200">{formatPriceINR(s.currentPrice)}</span>}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
               {(s.status === 'active' || s.status === 'notified') && (
@@ -288,7 +288,7 @@ function Notifications({ initial }) {
           const d = n.details || {};
           return (
             <li key={n.id} className="flex gap-3 p-4">
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${n.type === 'price_drop' ? 'bg-deal-50 text-deal-600 dark:bg-deal-500/10' : 'bg-brand-50 text-brand-600 dark:bg-brand-500/10'}`}>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${n.type === 'price_drop' ? 'border-deal-500/20 bg-deal-50 text-deal-700 dark:bg-deal-500/10 dark:text-deal-400' : 'border-brand-500/20 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400'}`}>
                 <Icon name={n.type === 'price_drop' ? 'trendingDown' : 'bag'} className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
@@ -302,7 +302,7 @@ function Notifications({ initial }) {
                   <StatusBadge map={DELIVERY} status={n.status} />
                   <span>{formatTime(n.createdAt)}</span>
                   {d.productUrl && (
-                    <a href={d.productUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300">
+                    <a href={d.productUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 hover:text-brand-800 dark:text-brand-300">
                       View product
                     </a>
                   )}
@@ -391,12 +391,13 @@ export default function Dashboard() {
   return (
     <div className="container-page max-w-5xl py-6 sm:py-8">
       <div className="card flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 font-display text-xl font-extrabold text-white">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-900 font-display text-lg font-semibold text-white ring-1 ring-inset ring-white/10 dark:bg-slate-100 dark:text-slate-950 dark:ring-slate-950/10">
           {user.fullName.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
         </span>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-bold text-slate-900 dark:text-white">{user.fullName}</h1>
-          <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="eyebrow">Account · Overview</p>
+          <h1 className="mt-1 truncate text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">{user.fullName}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <span className="break-all">{user.email}</span>
             {user.emailVerified && (
               <span className="badge bg-deal-50 text-deal-700 dark:bg-deal-500/10 dark:text-deal-500">
@@ -405,9 +406,9 @@ export default function Dashboard() {
             )}
           </p>
         </div>
-        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 dark:border-slate-700">
+        <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700">
           <span className="text-sm">
-            <span className="block font-semibold text-slate-800 dark:text-slate-100">Email code at login</span>
+            <span className="block font-medium text-slate-800 dark:text-slate-100">Email code at login</span>
             <span className="block text-xs text-slate-500 dark:text-slate-400">{user.isAdmin ? 'Always on for admin accounts' : 'Extra security for your account'}</span>
           </span>
           <input
@@ -434,7 +435,7 @@ export default function Dashboard() {
       </div>
 
       {emailMode === 'console' && (
-        <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-300/70 bg-amber-50 px-4 py-3 text-[13px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
           <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />
           Email sending is not configured on the server yet, so alerts are recorded and printed in the server console instead of being emailed.
         </div>
@@ -448,10 +449,10 @@ export default function Dashboard() {
           { label: 'Stock alerts', value: stats?.activeStockAlerts, icon: 'bag' },
         ].map((s) => (
           <div key={s.label} className="card p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <div className="flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
               <Icon name={s.icon} className="h-3.5 w-3.5" /> {s.label}
             </div>
-            <div className="mt-1 font-display text-2xl font-extrabold text-slate-900 dark:text-white">
+            <div className="mt-1.5 num text-2xl font-semibold text-slate-900 dark:text-white">
               {s.value ?? <span className="skeleton inline-block h-7 w-8 align-middle" />}
             </div>
           </div>
@@ -466,7 +467,7 @@ export default function Dashboard() {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setParams({ tab: t.id }, { replace: true })}
-            className={`-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
+            className={`-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors ${
               tab === t.id
                 ? 'border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300'
                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
@@ -474,7 +475,7 @@ export default function Dashboard() {
           >
             <Icon name={t.icon} className="h-4 w-4" />
             {t.label}
-            {counts[t.id] != null && <span className="rounded-full bg-slate-100 px-1.5 text-xs dark:bg-slate-800">{counts[t.id]}</span>}
+            {counts[t.id] != null && <span className="rounded-md bg-slate-100 px-1.5 font-mono text-[11px] tabular-nums text-slate-600 dark:bg-slate-800 dark:text-slate-300">{counts[t.id]}</span>}
           </button>
         ))}
       </div>
@@ -483,7 +484,7 @@ export default function Dashboard() {
         {!data ? (
           <div className="space-y-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="skeleton h-24 rounded-2xl" />
+              <div key={i} className="skeleton h-24 rounded-lg" />
             ))}
           </div>
         ) : tab === 'saved' ? (

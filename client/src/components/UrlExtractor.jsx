@@ -65,7 +65,7 @@ export default function UrlExtractor({ onExtracted, initialUrl = '' }) {
         <div className="relative flex-1">
           <Icon name="link" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <input
-            className="input h-14 rounded-2xl pl-12 text-base"
+            className="input h-12 rounded-lg pl-12 text-[15px]"
             placeholder="Paste a product link from Amazon.in, Flipkart or Myntra"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -81,7 +81,7 @@ export default function UrlExtractor({ onExtracted, initialUrl = '' }) {
             inputMode="url"
           />
         </div>
-        <button type="submit" className="btn-primary h-14 rounded-2xl px-7 text-base" disabled={loading || !url.trim()}>
+        <button type="submit" className="btn-primary h-12 rounded-lg px-6 text-[15px]" disabled={loading || !url.trim()}>
           {loading ? <Spinner /> : <Icon name="sparkles" className="h-4 w-4" />}
           {loading ? 'Reading link…' : 'Get details'}
         </button>
@@ -95,22 +95,22 @@ export default function UrlExtractor({ onExtracted, initialUrl = '' }) {
       </div>
 
       {error && (
-        <div className="mt-4 flex animate-slide-up items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+        <div className="mt-4 flex animate-slide-up items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-[13px] text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
           <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
       {result && (
-        <div className="mt-5 animate-slide-up rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="mt-5 animate-slide-up rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
           <div className="flex gap-4">
-            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700">
+            <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950">
               <ProductImage src={result.imageUrl} alt={result.name} className="h-full w-full" />
             </div>
             <div className="min-w-0 flex-1">
               <StoreBadge slug={result.storeSlug} size="sm" />
               <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-display text-2xl font-bold text-slate-900 dark:text-white">
+                <span className="num text-2xl font-semibold text-slate-900 dark:text-white">
                   {formatPriceINR(result.price)}
                 </span>
                 {result.mrp && (

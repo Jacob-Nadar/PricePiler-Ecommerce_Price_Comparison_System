@@ -8,7 +8,7 @@ import { useApp } from '../context/AppContext';
 import { bestOfferPerStore, formatPriceINR } from '../utils/formatters';
 
 // Sends logged-out users to /login and back to this page afterwards.
-function useRequireLogin() {
+export function useRequireLogin() {
   const { user } = useAuth();
   const { toast } = useApp();
   const navigate = useNavigate();
@@ -37,9 +37,9 @@ export function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-[55] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 animate-fade-in bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative max-h-[90vh] w-full max-w-md animate-slide-up overflow-y-auto rounded-t-3xl bg-white p-6 shadow-lift dark:bg-slate-900 sm:rounded-3xl">
+      <div className="relative max-h-[90vh] w-full max-w-md animate-slide-up overflow-y-auto rounded-t-xl border border-slate-200 bg-white p-6 shadow-lift dark:border-slate-800 dark:bg-slate-900 sm:rounded-xl">
         <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
           <button type="button" onClick={onClose} className="btn-icon -mr-2 -mt-2 h-9 w-9" aria-label="Close">
             <Icon name="x" className="h-4 w-4" />
           </button>
@@ -89,14 +89,14 @@ function PriceAlertForm({ product, onDone }) {
       <div>
         <label className="label" htmlFor="alert-target">Email me when the price is at or below</label>
         <div className="relative">
-          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-semibold text-slate-400">₹</span>
+          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-slate-400">₹</span>
           <input
             id="alert-target"
             type="number"
             inputMode="decimal"
             min="1"
             step="1"
-            className="input pl-8 text-lg font-semibold"
+            className="input pl-8 num text-lg font-semibold"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
             autoFocus
@@ -114,18 +114,18 @@ function PriceAlertForm({ product, onDone }) {
       <fieldset>
         <legend className="label">Watch at</legend>
         <div className="space-y-2">
-          <label className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 ${scope === 'all' ? 'border-brand-500 bg-brand-50/60 dark:bg-brand-500/10' : 'border-slate-200 dark:border-slate-700'}`}>
+          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 ${scope === 'all' ? 'border-brand-500 bg-brand-50/60 dark:border-brand-500/60 dark:bg-brand-500/10' : 'border-slate-200 dark:border-slate-700'}`}>
             <input type="radio" name="scope" value="all" checked={scope === 'all'} onChange={() => setScope('all')} className="text-brand-600" />
-            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Any store (cheapest price)</span>
+            <span className="text-sm font-medium text-slate-800 dark:text-slate-100">Any store (cheapest price)</span>
           </label>
           {stores.map((o) => (
             <label
               key={o.storeSlug}
-              className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 ${scope === o.storeSlug ? 'border-brand-500 bg-brand-50/60 dark:bg-brand-500/10' : 'border-slate-200 dark:border-slate-700'}`}
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 ${scope === o.storeSlug ? 'border-brand-500 bg-brand-50/60 dark:border-brand-500/60 dark:bg-brand-500/10' : 'border-slate-200 dark:border-slate-700'}`}
             >
               <input type="radio" name="scope" value={o.storeSlug} checked={scope === o.storeSlug} onChange={() => setScope(o.storeSlug)} className="text-brand-600" />
               <StoreBadge slug={o.storeSlug} name={o.storeName} size="sm" />
-              <span className="ml-auto text-sm font-semibold text-slate-700 dark:text-slate-200">{formatPriceINR(o.price)}</span>
+              <span className="ml-auto num text-sm font-medium text-slate-700 dark:text-slate-200">{formatPriceINR(o.price)}</span>
             </label>
           ))}
         </div>
@@ -191,9 +191,9 @@ export function StockAlertButton({ product, offer, className = '' }) {
           toast(err.message, { type: err.status === 409 ? 'info' : 'error' });
         }
       }}
-      className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold transition-colors ${
+      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-wide transition-colors ${
         state === 'done'
-          ? 'bg-deal-50 text-deal-700 dark:bg-deal-500/10 dark:text-deal-500'
+          ? 'bg-deal-50 text-deal-700 dark:bg-deal-500/10 dark:text-deal-400'
           : 'bg-brand-50 text-brand-700 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20'
       } ${className}`}
     >

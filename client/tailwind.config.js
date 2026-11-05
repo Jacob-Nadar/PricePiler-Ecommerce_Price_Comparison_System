@@ -1,39 +1,51 @@
 /** @type {import('tailwindcss').Config} */
+const jade = {
+  50: '#eaf9f3',
+  100: '#c9f2e3',
+  200: '#98e6cb',
+  300: '#5fd3ae',
+  400: '#2cbf92',
+  500: '#12a57c',
+  600: '#0a8566',
+  700: '#0a6a54',
+  800: '#0a5444',
+  900: '#093f35',
+  950: '#03241e',
+};
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+        // Cool graphite scale: crisp stationery on light, near-black panels in dark.
+        slate: {
+          50: '#f5f6f8',
+          100: '#eceef2',
+          200: '#dee2e8',
+          300: '#c5cbd5',
+          400: '#8b94a3',
+          500: '#626b7a',
+          600: '#48505c',
+          700: '#323945',
+          800: '#1c2129',
+          900: '#11151b',
+          950: '#07090c',
         },
-        deal: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-        },
+        // One signal colour for money, active states and focus. Used sparingly.
+        brand: jade,
+        deal: jade,
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Space Grotesk"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       boxShadow: {
-        soft: '0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -4px rgb(15 23 42 / 0.08)',
-        lift: '0 2px 4px rgb(15 23 42 / 0.04), 0 12px 32px -8px rgb(15 23 42 / 0.16)',
-        glow: '0 0 0 1px rgb(99 102 241 / 0.15), 0 12px 40px -12px rgb(79 70 229 / 0.45)',
+        soft: '0 1px 2px rgb(7 9 12 / 0.04)',
+        lift: '0 1px 2px rgb(7 9 12 / 0.05), 0 16px 32px -20px rgb(7 9 12 / 0.22)',
+        glow: '0 0 0 1px rgb(18 165 124 / 0.14), 0 18px 44px -28px rgb(18 165 124 / 0.35)',
       },
       keyframes: {
         'fade-in': { from: { opacity: 0 }, to: { opacity: 1 } },

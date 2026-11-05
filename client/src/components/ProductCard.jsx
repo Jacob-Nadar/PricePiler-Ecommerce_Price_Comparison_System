@@ -46,7 +46,7 @@ function StoreTile({ product, slug, name, offer, status, isBest, hiddenByFilters
   if (!offer) {
     const unavailable = status?.status === 'unavailable';
     return (
-      <div className="flex min-h-[5.5rem] flex-col justify-between rounded-xl border border-dashed border-slate-200 p-3 dark:border-slate-700">
+      <div className="flex min-h-[5.5rem] flex-col justify-between rounded-lg border border-dashed border-slate-200 p-3 dark:border-slate-700">
         <StoreBadge slug={slug} name={name} size="sm" />
         <p className={`text-xs ${unavailable ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}`}>
           {unavailable ? 'Store busy — try refresh' : hiddenByFilters ? 'Hidden by your filters' : 'Not listed at this store'}
@@ -57,16 +57,16 @@ function StoreTile({ product, slug, name, offer, status, isBest, hiddenByFilters
   const isOut = offer.availability === 'out_of_stock';
   return (
     <div
-      className={`group/tile relative flex min-h-[5.5rem] flex-col rounded-xl border transition-all hover:-translate-y-0.5 hover:shadow-soft ${
+      className={`group/tile relative flex min-h-[5.5rem] flex-col rounded-lg border transition-colors ${
         isBest
-          ? 'border-deal-500/40 bg-deal-50/70 ring-1 ring-deal-500/20 dark:border-deal-500/30 dark:bg-deal-500/5'
+          ? 'border-brand-400/60 bg-brand-50/60 ring-1 ring-brand-400/20 dark:border-brand-400/40 dark:bg-brand-500/5'
           : isOut
             ? 'border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/40'
             : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600'
       }`}
     >
       {isBest && (
-        <span className="absolute -top-2.5 right-3 rounded-full bg-deal-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+        <span className="absolute -top-2.5 right-3 rounded-[4px] bg-brand-500 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-950 shadow-soft">
           Best price
         </span>
       )}
@@ -82,13 +82,13 @@ function StoreTile({ product, slug, name, offer, status, isBest, hiddenByFilters
         </div>
         <div className="flex items-end justify-between gap-2">
           <div>
-            <div className={`font-display text-lg font-bold leading-none ${isOut ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
+            <div className={`num text-[17px] font-semibold leading-none ${isOut ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
               {formatPriceINR(offer.price)}
             </div>
             {offer.discountPercent > 0 && !isOut && (
               <div className="mt-1 text-[11px] text-slate-400">
                 <span className="line-through">{formatPriceINR(offer.mrp)}</span>{' '}
-                <span className="font-semibold text-deal-600 dark:text-deal-500">{offer.discountPercent}% off</span>
+                <span className="font-semibold text-brand-700 dark:text-brand-400">{offer.discountPercent}% off</span>
               </div>
             )}
           </div>
@@ -126,7 +126,7 @@ export default function ProductCard({ product, index = 0 }) {
           <Link
             to={to}
             state={{ product }}
-            className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-white p-2 dark:border-slate-800 sm:h-32 sm:w-32"
+            className="relative h-28 w-28 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 sm:h-32 sm:w-32"
           >
             <ProductImage
               src={product.imageUrl}
@@ -168,14 +168,14 @@ export default function ProductCard({ product, index = 0 }) {
             <div className="mt-3">
               {hasInStock && bestOffer ? (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                  <span className="font-display text-2xl font-extrabold text-slate-900 dark:text-white">
+                  <span className="num text-[22px] font-semibold text-slate-900 dark:text-white">
                     {formatPriceINR(bestOffer.price)}
                   </span>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                  <span className="text-[13px] text-slate-500 dark:text-slate-400">
                     lowest at <span className="font-semibold text-slate-700 dark:text-slate-200">{bestOffer.storeName}</span>
                   </span>
                   {savings && (
-                    <span className="badge bg-deal-600 text-white">
+                    <span className="badge bg-brand-500 text-slate-950">
                       Save {formatPriceINR(savings.amount)} vs {shortStoreName(savings.comparedTo)}
                     </span>
                   )}
@@ -209,7 +209,7 @@ export default function ProductCard({ product, index = 0 }) {
           })}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-slate-800">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 font-mono text-[11px] text-slate-400 dark:border-slate-800">
           <span className="flex items-center gap-1">
             <Icon name="clock" className="h-3.5 w-3.5" />
             Checked {timeAgo(lastChecked) || 'just now'}
@@ -219,12 +219,12 @@ export default function ProductCard({ product, index = 0 }) {
             <PriceAlertButton
               product={product}
               label="Price alert"
-              className="inline-flex items-center gap-1 font-semibold text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-300"
+              className="inline-flex items-center gap-1 font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             />
             <Link
               to={to}
               state={{ product }}
-              className="inline-flex items-center gap-1 font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
+              className="inline-flex items-center gap-1 font-semibold text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
             >
               Price history &amp; all offers
               <Icon name="chevronRight" className="h-4 w-4" />

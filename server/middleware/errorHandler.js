@@ -5,7 +5,11 @@ function notFound(req, res) {
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   const status = err.status || 500;
-  const message = err.message || 'Internal server error';
+  // Only surface messages the code set deliberately (an explicit err.status).
+  // Anything else is an unexpected failure whose raw message could reveal
+  // internals (SQL text, stack details), so it is replaced with a generic one;
+  // the full error is still logged server-side below.
+  const message = err.status ? err.message || 'Request failed' : 'Internal server error';
   if (process.env.NODE_ENV !== 'production') {
     console.error('[error]', err);
   }

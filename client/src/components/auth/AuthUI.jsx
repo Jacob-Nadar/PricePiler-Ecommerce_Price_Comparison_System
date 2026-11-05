@@ -9,7 +9,7 @@ export function AuthCard({ title, subtitle, children, footer }) {
     <div className="container-page flex min-h-[calc(100vh-4rem)] items-start justify-center py-10 sm:items-center">
       <div className="w-full max-w-md animate-slide-up">
         <div className="card p-6 shadow-lift sm:p-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{title}</h1>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">{title}</h1>
           {subtitle && <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>}
           <div className="mt-6">{children}</div>
         </div>
@@ -44,7 +44,7 @@ export function FormMessage({ type = 'error', children }) {
         ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300'
         : 'border-deal-500/30 bg-deal-50 text-deal-700 dark:bg-deal-500/10 dark:text-deal-500';
   return (
-    <div className={`flex animate-fade-in items-start gap-2 rounded-xl border px-3.5 py-2.5 text-sm ${tone}`} role={type === 'error' ? 'alert' : 'status'}>
+    <div className={`flex animate-fade-in items-start gap-2 rounded-lg border px-3.5 py-2.5 text-[13px] ${tone}`} role={type === 'error' ? 'alert' : 'status'}>
       <Icon name={type === 'error' ? 'alert' : type === 'info' ? 'info' : 'check'} className="mt-0.5 h-4 w-4 shrink-0" />
       <span>{children}</span>
     </div>
@@ -82,7 +82,7 @@ export function PasswordInput({ id, value, onChange, autoComplete, showStrength 
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-wide text-slate-500 hover:text-slate-800 dark:hover:text-white"
           aria-label={visible ? 'Hide password' : 'Show password'}
         >
           {visible ? 'Hide' : 'Show'}
@@ -95,7 +95,7 @@ export function PasswordInput({ id, value, onChange, autoComplete, showStrength 
               <span key={i} className={`h-1 flex-1 rounded-full ${i < score ? colors[score] : 'bg-slate-200 dark:bg-slate-700'}`} />
             ))}
           </div>
-          <span className="text-xs text-slate-500">{labels[score]}</span>
+          <span className="font-mono text-[10px] uppercase tracking-wide text-slate-500">{labels[score]}</span>
         </div>
       )}
     </div>
@@ -153,7 +153,7 @@ export function OtpInput({ value, onChange, disabled, autoFocus = true, invalid 
           autoComplete={i === 0 ? 'one-time-code' : 'off'}
           maxLength={i === 0 ? 6 : 1}
           aria-label={`Digit ${i + 1}`}
-          className={`h-14 w-full min-w-0 rounded-xl border bg-white text-center font-display text-2xl font-bold text-slate-900 shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:bg-slate-900 dark:text-white ${
+          className={`h-14 w-full min-w-0 rounded-lg border bg-white text-center font-mono text-xl font-semibold tabular-nums text-slate-900 transition-colors focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:bg-slate-950 dark:text-white ${
             invalid ? 'border-rose-400' : 'border-slate-200 dark:border-slate-700'
           }`}
           onChange={(e) => {
@@ -247,7 +247,7 @@ export function OtpStep({ email, purpose, expiresInSeconds = 300, resendInSecond
 
   return (
     <form onSubmit={submit} className="space-y-5" noValidate>
-      <div className="flex items-start gap-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900 dark:bg-brand-500/10 dark:text-brand-200">
+      <div className="flex items-start gap-3 rounded-lg border border-brand-500/20 bg-brand-50 px-4 py-3 text-[13px] text-brand-900 dark:border-brand-500/25 dark:bg-brand-500/10 dark:text-brand-200">
         <Icon name="bell" className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
           We sent a 6-digit code to <strong className="break-all">{email}</strong>.
@@ -270,7 +270,7 @@ export function OtpStep({ email, purpose, expiresInSeconds = 300, resendInSecond
           type="button"
           onClick={resend}
           disabled={resendLeft > 0 || resending}
-          className="font-semibold text-brand-600 hover:text-brand-700 disabled:cursor-not-allowed disabled:text-slate-400 dark:text-brand-300"
+          className="font-medium text-brand-700 hover:text-brand-800 disabled:cursor-not-allowed disabled:text-slate-400 dark:text-brand-300"
         >
           {resending ? 'Sending…' : resendLeft > 0 ? `Resend in ${resendLeft}s` : 'Resend code'}
         </button>
@@ -319,7 +319,7 @@ export function AdminRoute({ children }) {
       ) : (
         <div className="container-page max-w-xl py-20 text-center">
           <Icon name="shield" className="mx-auto h-10 w-10 text-slate-300" />
-          <h1 className="mt-4 text-2xl font-bold text-slate-900 dark:text-white">Admins only</h1>
+          <h1 className="mt-4 text-xl font-semibold text-slate-900 dark:text-white">Admins only</h1>
           <p className="mt-2 text-slate-500 dark:text-slate-400">Your account does not have access to the admin panel.</p>
         </div>
       )}

@@ -98,7 +98,8 @@ async function prepareSearchResults(results) {
     const annotated = results.map((r) => ({
       ...r,
       offers: r.offers.map((o) => {
-        const id = idByKey.get(catalog.listingKeyFor(o.storeSlug, o.productUrl));
+        const key = catalog.listingKeyFor(o.storeSlug, o.productUrl);
+        const id = idByKey.get(key);
         const series = id ? points.get(id) : null;
         const stats = series?.length ? summarize(series, o.price) : null;
         return {

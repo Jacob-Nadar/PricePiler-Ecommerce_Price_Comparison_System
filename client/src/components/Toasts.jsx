@@ -19,10 +19,10 @@ export default function Toasts() {
         return (
           <div
             key={t.id}
-            className="pointer-events-auto flex w-full max-w-sm animate-slide-up items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm shadow-lift backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
+            className="pointer-events-auto flex w-full max-w-sm animate-slide-up items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-[13px] shadow-lift dark:border-slate-700 dark:bg-slate-900"
             role="status"
           >
-            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white ${style.tone}`}>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-white ${style.tone}`}>
               <Icon name={style.icon} className="h-3.5 w-3.5" strokeWidth={3} />
             </span>
             <span className="flex-1 font-medium text-slate-700 dark:text-slate-200">{t.message}</span>
